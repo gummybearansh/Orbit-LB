@@ -3,11 +3,11 @@ package ui
 templ ServerCard(port string, isAlive bool) {
 	if isAlive {
 		<div class="bg-slate-800 border-l-4 border-emerald-500 text-emerald-400 p-4 mt-4 rounded shadow-md font-mono" hx-get={ "/health?port=" + port } hx-trigger="every 2s" hx-swap="outerHTML">
-			Server :{ port } [ALIVE]
+			Server { port } [ALIVE]
 		</div>
 	} else {
 		<div class="bg-slate-800 border-l-4 border-red-500 text-red-400 p-4 mt-4 rounded shadow-md font-mono" hx-get={ "/health?port=" + port } hx-trigger="every 2s" hx-swap="outerHTML">
-			Server :{ port } [DEAD]
+			Server { port } [DEAD]
 		</div>
 	}
 }

@@ -22,9 +22,8 @@ var (
 	PortMutex sync.Mutex
 
 	// handles which servers are active
-	Registry = make(map[string]*Node)
 	RegistryMutex sync.RWMutex
-
+	Registry = make(map[string]*Node)
 	// active array for Round Robin Load balancing 
 	ActivePorts []string
 )
@@ -36,7 +35,7 @@ func GetPort() (string, error) {
 
 	// Read lock the registry to safely check if ports are active 
 	RegistryMutex.RLock()
-	defer RegistryMutex.Unlock()
+	defer RegistryMutex.RUnlock()
 
 	portString := ":" + strconv.Itoa(NextPort)
 
@@ -78,7 +77,8 @@ func SpawnServer(port string) {
 	}
 
 	// i would cancel this timer / reset the timer if there is a call made to this server
-	time.AfterFunc(1 * time.Minute, func () {
+	// time.AfterFunc(1 * time.Minute, func () {
+	time.AfterFunc(20 * time.Second, func(){
 		// need to make sure this server's node says it's dead
 		RegistryMutex.Lock()
 		Registry[port].Status = false
@@ -89,6 +89,7 @@ func SpawnServer(port string) {
 			if v == port {
 				// move everything after 'i' to before i - Go's way of deleting an element
 				ActivePorts = append(ActivePorts[:i], ActivePorts[i+1:]...)
+				break
 			}
 		}
 
