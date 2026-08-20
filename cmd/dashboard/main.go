@@ -19,6 +19,8 @@ func main(){
 
 	mux.HandleFunc("/health", handlers.HandleHealth)
 
+	mux.HandleFunc("/blast", handlers.HandleBlast)
+
 	// actual binding call 
 	if err := http.ListenAndServe(":3000", mux); err != nil {
 		fmt.Println("server failed: ", err)

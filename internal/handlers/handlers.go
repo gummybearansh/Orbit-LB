@@ -3,10 +3,12 @@ package handlers
 import (
 	"dashboard/internal/cluster"
 	"dashboard/ui"
+	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -100,4 +102,44 @@ func HandleProxy(w http.ResponseWriter, r *http.Request){
 
 	proxy := httputil.NewSingleHostReverseProxy(targetUrl)
 	proxy.ServeHTTP(w, r)
+}
+
+
+// this function will tick every second from the frontned
+// with the count of the blast in the query param
+func HandleBlast (w http.ResponseWriter, r *http.Request){
+	// get the count from the query parameter 
+	count, err := strconv.Atoi(r.URL.Query().Get("count"))
+	if err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return;
+	}
+
+	// wait group so function doesn't end until all 50 requests have been fired
+	var wg sync.WaitGroup
+
+	// instantly spins up 50 go routines
+	for _ = range count {
+
+		// goers up 50 times - 50 go routines spin up 
+		// expects 50 go routines to decrement it by calling Done()
+		wg.Add(1)
+
+		// anonymous go routine 
+		go func (){
+			// each go routine will say it's done
+			defer wg.Done()
+			// hit the Load balanced endpoint
+			resp, err := http.Get("http://127.0.0.1:3000/proxy")
+			if err == nil {
+				// manually close the connection if it succeeded
+				resp.Body.Close()
+			}
+		}()
+	}
+
+	// don't let this function end until all go routines are done - make the waitgroup wait 
+	wg.Wait()
+
+	fmt.Fprintf(w, "<div>Burst of %d complete</div>", count)
 }

@@ -68,7 +68,17 @@ func SpawnServer(port string) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello world")
+		// update the request counter of this server 
+		RegistryMutex.Lock()
+		node, exists := Registry[port]; 
+		if exists {
+			node.RequestsHandled ++
+		}
+
+		// send simple 200 response 
+		fmt.Fprintf(w, "Node %s | Total Handled: %d", port, node.RequestsHandled)
+
+		RegistryMutex.Unlock()
 	})
 
 	server := &http.Server{
