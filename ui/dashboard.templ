@@ -1,0 +1,130 @@
+package ui
+
+import "dashboard/internal/cluster"
+import "fmt"
+import "strconv"
+
+// 1. The Individual Server Card (With OOB Support & Capacity Bar)
+templ ServerCard(node *cluster.Node, isOOB bool) {
+	<div id={ "node-" + node.Port[1:] }
+		class={ "p-5 rounded-xl border flex flex-col gap-4 font-mono transition-all duration-300", 
+				templ.KV("bg-white border-emerald-400 shadow-sm hover:shadow-md", node.Status), 
+				templ.KV("bg-slate-50 border-rose-200 opacity-50", !node.Status) }
+		hx-get={ "/health?port=" + node.Port[1:] }
+		hx-trigger="every 2s"
+		hx-swap="outerHTML"
+		if isOOB {
+			hx-swap-oob="true"
+		}
+	>
+		<div class="flex justify-between items-start">
+			<div>
+				<span class="text-xs font-black text-slate-400 uppercase tracking-widest block mb-1">Target Node</span>
+				<span class="font-bold text-slate-900 text-lg leading-none">{ node.Port }</span>
+			</div>
+			if node.Status {
+				<span class="h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></span>
+			} else {
+				<span class="h-2.5 w-2.5 rounded-full bg-rose-500"></span>
+			}
+		</div>
+		
+		<div>
+			<div class="flex justify-between text-xs font-semibold text-slate-500 mb-1.5">
+				<span>Load Distribution</span>
+				<span class="text-slate-900">{ strconv.Itoa(node.RequestsHandled) } reqs</span>
+			</div>
+			<!-- Capacity Bar (CSS implicitly caps width at 100% due to parent overflow-hidden) -->
+			<div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+				<div class="bg-indigo-500 h-full transition-all duration-700 ease-out" style={ fmt.Sprintf("width: %d%%", node.RequestsHandled) }></div>
+			</div>
+		</div>
+	</div>
+}
+
+// 2. The OOB Response Payload for the Load Blaster
+templ BlastResult(count string, registry map[string]*cluster.Node) {
+	<div id="blast-status" hx-swap-oob="true" class="text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-md inline-block">
+		Burst of { count } Complete
+	</div>
+	
+	// This invisibly swaps every single card on the screen simultaneously
+	for _, node := range registry {
+		@ServerCard(node, true)
+	}
+}
+
+// 3. The Main App Shell
+templ Dashboard(registry map[string]*cluster.Node) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>L7 Hyper-Proxy</title>
+			<script src="https://cdn.tailwindcss.com"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.11"></script>
+		</head>
+		<body class="bg-slate-50 text-slate-900 font-sans h-screen flex flex-col overflow-hidden">
+			
+			<header class="shrink-0 border-b border-slate-200 bg-white p-6 z-10 flex justify-between items-center">
+				<div>
+					<h1 class="text-2xl font-black tracking-tighter text-slate-900">HYPER-PROXY</h1>
+					<p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1">L7 Network Topology</p>
+				</div>
+			</header>
+
+			<main class="flex-1 flex overflow-hidden">
+				<!-- Left Column: The Control Plane -->
+				<aside class="w-1/3 bg-white border-r border-slate-200 p-8 flex flex-col justify-between relative shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10">
+					
+					<!-- Visual Load Balancer representation -->
+					<div>
+						<h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Ingress Engine</h2>
+						<div class="border-2 border-indigo-100 bg-indigo-50 rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden">
+							<div class="absolute inset-0 bg-indigo-500 opacity-0 transition-opacity duration-300" id="lb-pulse"></div>
+							<div class="h-12 w-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center mb-3 shadow-md z-10">
+								<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+							</div>
+							<span class="font-mono font-bold text-indigo-900 z-10">Reverse Proxy</span>
+							<span class="text-xs font-semibold text-indigo-500 mt-1 z-10">localhost:3000/proxy</span>
+						</div>
+					</div>
+
+					<!-- Control Panel Forms -->
+					<div class="space-y-6">
+						<h2 class="text-xs font-black text-slate-400 uppercase tracking-widest">Control Panel</h2>
+						
+						<button hx-post="/spawn" hx-target="#server-cluster" hx-swap="beforeend" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-lg text-sm tracking-wide transition-colors shadow-md flex justify-center items-center gap-2">
+							<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+							Spawn Node
+						</button>
+
+						<div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+							<div class="flex justify-between items-center mb-4">
+								<span class="text-[10px] font-black text-slate-500 uppercase tracking-widest">Load Blaster</span>
+								<div id="blast-status" class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Standby</div>
+							</div>
+							<form hx-get="/blast" hx-swap="none" onsubmit="document.getElementById('lb-pulse').classList.add('opacity-20'); setTimeout(() => document.getElementById('lb-pulse').classList.remove('opacity-20'), 300)" class="flex gap-2">
+								<input type="number" name="count" value="50" min="1" class="w-20 bg-white border border-slate-200 rounded-lg px-3 font-mono font-bold text-slate-700 outline-none focus:border-indigo-500 transition-colors" />
+								<button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg text-sm tracking-wide transition-colors shadow-md">
+									Fire Traffic
+								</button>
+							</form>
+						</div>
+					</div>
+				</aside>
+
+				<!-- Right Column: The Cluster Grid -->
+				<section class="w-2/3 bg-slate-50/50 p-8 overflow-y-auto relative">
+					<h2 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Backend Topology</h2>
+					<div id="server-cluster" class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20">
+						for _, node := range registry {
+							@ServerCard(node, false)
+						}
+					</div>
+				</section>
+			</main>
+		</body>
+	</html>
+}

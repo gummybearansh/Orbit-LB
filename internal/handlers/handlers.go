@@ -3,7 +3,6 @@ package handlers
 import (
 	"dashboard/internal/cluster"
 	"dashboard/ui"
-	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -29,15 +28,17 @@ func HandleSpawn(w http.ResponseWriter, r *http.Request){
 
 	// spawn the actual server 
 	go cluster.SpawnServer(port)
-	// can't return value from goroutine??? 
-	// if err != nil {
-	// 	fmt.Fprintf(w, "<h2>Failed to spawn server</h2>")
-	// }
 
-	card := ui.ServerCard(port, true)
-	// context of the request and render directly to responseWriter
-	card.Render(r.Context(), w)
-}
+	// Optimistic UI Injection (few microseconds till the server launches - till then this works)
+	optimisticNode := &cluster.Node{
+		Port:            port,
+		Status:          true,
+		RequestsHandled: 0,
+	}
+
+	// 4. Render directly to the DOM
+	card := ui.ServerCard(optimisticNode, false)
+	card.Render(r.Context(), w)}
 
 
 func HandleHealth(w http.ResponseWriter, r *http.Request){
@@ -50,23 +51,37 @@ func HandleHealth(w http.ResponseWriter, r *http.Request){
 	}
 
 	// try connecting to the server 
-	target_port := port // it's already a string
+	target_port := ":" + port 
 	conn, err := net.DialTimeout("tcp", target_port, 1 * time.Second)
 
-	if err != nil {
-		// Failure - server is dead - return the dead card
-		// Notice it STILL has the hx-get attributes, so it keeps polling! If the server comes back, it turns green again.
-		
-		failure_card := ui.ServerCard(port, false)
-		failure_card.Render(r.Context(), w)
+	// Lock for writing and verify the node actually exists in memory
+	cluster.RegistryMutex.Lock()
+	node, exists := cluster.Registry[target_port]
+	if !exists {
+		// Zombie poll detected from an old browser session.
+		cluster.RegistryMutex.Unlock()
+		// Returning an empty response tells HTMX to delete the card from the UI
 		return
-	} 
-	// SUCCESS: The server is alive. 
-	conn.Close() // Immediately close the socket so we don't leak memory
+	}
 
-	// Return the GREEN card
-	success_card := ui.ServerCard(port, true)
-	success_card.Render(r.Context(), w)
+	if err != nil {
+		// Failure - server is dead 
+		// update the registry - this server's status 
+		node.Status = false
+	}  else {
+		// SUCCESS: The server is alive. 
+		conn.Close() // Immediately close the socket so we don't leak memory
+		node.Status = true
+	}
+	cluster.RegistryMutex.Unlock()
+
+	// Lock for reading and render
+	cluster.RegistryMutex.RLock()
+	defer cluster.RegistryMutex.RUnlock()
+
+	// isOOB MUST be false here! This is a direct HTMX response.
+	card := ui.ServerCard(cluster.Registry[target_port], false)
+	card.Render(r.Context(), w)
 }
 
 
@@ -141,5 +156,22 @@ func HandleBlast (w http.ResponseWriter, r *http.Request){
 	// don't let this function end until all go routines are done - make the waitgroup wait 
 	wg.Wait()
 
-	fmt.Fprintf(w, "<div>Burst of %d complete</div>", count)
+	// Acquire Read Lock to safely pass the map to the template
+	cluster.RegistryMutex.RLock()
+	defer cluster.RegistryMutex.RUnlock()
+
+	// 2. Render the OOB component directly to the socket
+	countStr := r.URL.Query().Get("count")
+	res := ui.BlastResult(countStr, cluster.Registry)
+	res.Render(r.Context(), w)
+}
+
+
+func HandleHome(w http.ResponseWriter, r *http.Request){
+	cluster.RegistryMutex.RLock()
+	dashboard := ui.Dashboard(cluster.Registry)
+
+	dashboard.Render(r.Context(), w)
+	// unlock after the renderere has rendered it (loops through it so it needs read access too)
+	cluster.RegistryMutex.RUnlock()
 }

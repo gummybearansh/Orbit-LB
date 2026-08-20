@@ -68,17 +68,16 @@ func SpawnServer(port string) {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		// update the request counter of this server 
+		// lock and grab the value first
 		RegistryMutex.Lock()
-		node, exists := Registry[port]; 
-		if exists {
-			node.RequestsHandled ++
+		var currentReqs int
+		if node, exists := Registry[port]; exists {
+			node.RequestsHandled++
+			currentReqs = node.RequestsHandled
 		}
-
-		// send simple 200 response 
-		fmt.Fprintf(w, "Node %s | Total Handled: %d", port, node.RequestsHandled)
-
-		RegistryMutex.Unlock()
+		RegistryMutex.Unlock() // Unlock instantly!
+		// send simple 200 response
+		fmt.Fprintf(w, "Node %s | Total Handled: %d", port, currentReqs)
 	})
 
 	server := &http.Server{
