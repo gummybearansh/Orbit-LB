@@ -1,25 +1,33 @@
 package cluster
 
 import (
-	"time"
-	"sync"
-	"strconv"
-	"net/http"
 	"fmt"
+	"net/http"
+	"strconv"
+	"sync"
+	"time"
 )
+
+type Node struct {
+	Port string
+	Status bool
+	RequestsHandled int
+}
 
 var (
-	nextPort = 8000
-	portMutex sync.Mutex
+	NextPort = 8000
+	PortMutex sync.Mutex
+
+	Registry = make(map[string]*Node)
+	RegistryMutex sync.RWMutex
 )
 
-
 func GetPort() string {
-	portMutex.Lock()
-	defer portMutex.Unlock()
+	PortMutex.Lock()
+	defer PortMutex.Unlock()
 
-	nextPort += 1 
-	return strconv.Itoa(nextPort)
+	NextPort += 1 
+	return strconv.Itoa(NextPort)
 }
 
 
@@ -30,15 +38,39 @@ func SpawnServer(port string) {
 		fmt.Fprintf(w, "Hello world")
 	})
 
+	port = ":" + port
+
 	server := &http.Server{
-		Addr:         ":" + port,           // Set the network address (TCP)
+		Addr:         port,           // Set the network address (TCP)
 		Handler: mux,
 	}
 
 	// i would cancel this timer / reset the timer if there is a call made to this server
 	time.AfterFunc(1 * time.Minute, func () {
+		// need to make sure this server's node says it's dead
+		RegistryMutex.Lock()
+		Registry[port].Status = false
+		RegistryMutex.Unlock()
 		server.Close()
 	}) 
+
+	// first lock the mutex 
+	RegistryMutex.Lock()
+	// get it from the active servers and activate it / create it 
+	registryServer, ok := Registry[port]
+	if !ok {
+		// first time connecting to this server 
+		Registry[port] = &Node{
+			Port: port,
+			Status: true,	
+			RequestsHandled: 0,
+		}
+	}
+
+	registryServer.Status = true
+
+	// unlock manually (this functino never returns)
+	RegistryMutex.Unlock()
 
 	// blocking function - will keep the goroutine alive for 10 minutes 
 	server.ListenAndServe()
