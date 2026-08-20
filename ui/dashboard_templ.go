@@ -11,8 +11,45 @@ import templruntime "github.com/a-h/templ/runtime"
 import "dashboard/internal/cluster"
 import "fmt"
 import "strconv"
+import "time"
 
-// 1. The Individual Server Card (With OOB Support & Capacity Bar)
+// calculate points for the sparkline based on history (max 20 points, each max value is say 50 for height scaling)
+func sparklinePoints(history []int) string {
+	if len(history) == 0 {
+		return "0,40 100,40"
+	}
+	maxRPS := 10
+	for _, v := range history {
+		if v > maxRPS {
+			maxRPS = v
+		}
+	}
+
+	points := ""
+	step := 100.0 / float64(19) // 20 points means 19 segments
+	if len(history) < 20 {
+		if len(history) > 1 {
+			step = 100.0 / float64(len(history)-1)
+		} else {
+			step = 0
+		}
+	}
+
+	if step == 0 {
+		y := 40 - (float64(history[0])/float64(maxRPS))*35
+		return fmt.Sprintf("0,%f 100,%f", y, y)
+	}
+
+	for i, v := range history {
+		x := float64(i) * step
+		// scale v to 0-35 (leave 5px padding at top)
+		y := 40 - (float64(v)/float64(maxRPS))*35
+		points += fmt.Sprintf("%.1f,%.1f ", x, y)
+	}
+	return points
+}
+
+// 1. The Individual Server Node
 func ServerCard(node *cluster.Node, isOOB bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -34,9 +71,9 @@ func ServerCard(node *cluster.Node, isOOB bool) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var2 = []any{"p-5 rounded-xl border flex flex-col gap-4 font-mono transition-all duration-300",
-			templ.KV("bg-white border-emerald-400 shadow-sm hover:shadow-md", node.Status),
-			templ.KV("bg-slate-50 border-rose-200 opacity-50", !node.Status)}
+		var templ_7745c5c3_Var2 = []any{"server-node relative group p-4 rounded-xl border flex flex-col gap-3 font-mono transition-all duration-300 backdrop-blur-md cursor-pointer",
+			templ.KV("bg-slate-900/60 border-emerald-500/30 hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]", node.Status),
+			templ.KV("bg-slate-900/40 border-rose-500/20 opacity-40", !node.Status)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -48,103 +85,196 @@ func ServerCard(node *cluster.Node, isOOB bool) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.ResolveAttributeValue("node-" + node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 9, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 46, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var3)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" data-port=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var2).String())
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.ResolveAttributeValue(node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 47, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue("/health?port=" + node.Port[1:])
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.ResolveAttributeValue(templ.CSSClasses(templ_7745c5c3_Var2).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 13, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var5)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" hx-trigger=\"every 2s\" hx-swap=\"outerHTML\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if isOOB {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, " hx-swap-oob=\"true\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "><div class=\"flex justify-between items-start\"><div><span class=\"text-xs font-black text-slate-400 uppercase tracking-widest block mb-1\">Target Node</span> <span class=\"font-bold text-slate-900 text-lg leading-none\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(node.Port)
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.ResolveAttributeValue("/health?port=" + node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 23, Col: 75}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 51, Col: 42}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var6)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if node.Status {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<span class=\"h-2.5 w-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]\"></span>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<span class=\"h-2.5 w-2.5 rounded-full bg-rose-500\"></span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" hx-trigger=\"every 1s\" hx-swap=\"outerHTML\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if isOOB {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, " hx-swap-oob=\"true\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div><div class=\"flex justify-between text-xs font-semibold text-slate-500 mb-1.5\"><span>Load Distribution</span> <span class=\"text-slate-900\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "><!-- Tooltip on Hover --><div class=\"absolute -top-[4.5rem] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 w-48\"><div class=\"bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-2xl text-xs text-slate-300 flex flex-col gap-1\"><div class=\"flex justify-between\"><span class=\"text-slate-500\">Uptime:</span> <span class=\"font-bold text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.RequestsHandled))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0fs", 20-time.Since(node.CreatedAt).Seconds()))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 35, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 61, Col: 182}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " reqs</span></div><!-- Capacity Bar (CSS implicitly caps width at 100% due to parent overflow-hidden) --><div class=\"w-full bg-slate-100 h-1.5 rounded-full overflow-hidden\"><div class=\"bg-indigo-500 h-full transition-all duration-700 ease-out\" style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</span></div><div class=\"flex justify-between\"><span class=\"text-slate-500\">Total Reqs:</span> <span class=\"font-bold text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("width: %d%%", node.RequestsHandled))
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.RequestsHandled))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 39, Col: 131}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 62, Col: 157}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</span></div><div class=\"flex justify-between\"><span class=\"text-slate-500\">Current RPS:</span> <span class=\"font-bold text-white\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.CurrentRPS))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 63, Col: 153}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></div></div><!-- Tooltip arrow --><div class=\"w-3 h-3 bg-slate-800 border-b border-r border-slate-700 transform rotate-45 mx-auto -mt-1.5\"></div></div><div class=\"flex justify-between items-center\"><div class=\"flex items-center gap-2\"><div class=\"p-1.5 rounded-md bg-slate-800 border border-slate-700\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"text-indigo-400\"><rect x=\"2\" y=\"2\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><rect x=\"2\" y=\"14\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><line x1=\"6\" y1=\"6\" x2=\"6.01\" y2=\"6\"></line><line x1=\"6\" y1=\"18\" x2=\"6.01\" y2=\"18\"></line></svg></div><span class=\"font-bold text-slate-200 text-sm\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(node.Port)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 74, Col: 62}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if node.Status {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<span class=\"relative flex h-2.5 w-2.5\"><span class=\"animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75\"></span> <span class=\"relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]\"></span></span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<span class=\"h-2.5 w-2.5 rounded-full bg-rose-600 shadow-[0_0_8px_rgba(225,29,72,0.8)]\"></span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div><!-- Sparkline Graph --><div class=\"w-full h-10 mt-1 relative\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if node.Status {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<svg viewBox=\"0 0 100 40\" class=\"w-full h-full preserve-aspect-ratio-none overflow-visible\"><defs><linearGradient id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue("grad-" + node.Port[1:])
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 91, Col: 50}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" x1=\"0\" x2=\"0\" y1=\"0\" y2=\"1\"><stop offset=\"0%\" stop-color=\"rgba(16, 185, 129, 0.4)\"></stop> <stop offset=\"100%\" stop-color=\"rgba(16, 185, 129, 0.0)\"></stop></linearGradient></defs> <polyline points=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.ResolveAttributeValue(sparklinePoints(node.History))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 97, Col: 44}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var12)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" fill=\"none\" stroke=\"#10b981\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"drop-shadow-[0_0_3px_rgba(16,185,129,0.5)] transition-all duration-300\"></polyline> <polygon points=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.ResolveAttributeValue(sparklinePoints(node.History) + " 100,40 0,40")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 106, Col: 61}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" fill=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var14 string
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("url(#grad-%s)", node.Port[1:]))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 107, Col: 56}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" class=\"transition-all duration-300\"></polygon></svg>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"w-full h-full flex items-center justify-center border-t border-slate-800/50\"><span class=\"text-[10px] text-rose-500/50 uppercase tracking-widest mt-2\">Offline</span></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -169,25 +299,25 @@ func BlastResult(count string, registry map[string]*cluster.Node) templ.Componen
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<div id=\"blast-status\" hx-swap-oob=\"true\" class=\"text-xs font-black text-emerald-600 uppercase tracking-widest bg-emerald-50 px-3 py-1 rounded-md inline-block\">Burst of ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div id=\"blast-status\" hx-swap-oob=\"true\" class=\"text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-900/30 border border-cyan-800/50 px-2 py-1 rounded\">Burst: ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(count)
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(count)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 48, Col: 18}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 123, Col: 16}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " Complete</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -218,12 +348,12 @@ func Dashboard(registry map[string]*cluster.Node) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>L7 Hyper-Proxy</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.11\"></script></head><body class=\"bg-slate-50 text-slate-900 font-sans h-screen flex flex-col overflow-hidden\"><header class=\"shrink-0 border-b border-slate-200 bg-white p-6 z-10 flex justify-between items-center\"><div><h1 class=\"text-2xl font-black tracking-tighter text-slate-900\">HYPER-PROXY</h1><p class=\"text-[10px] font-bold text-indigo-500 uppercase tracking-widest mt-1\">L7 Network Topology</p></div></header><main class=\"flex-1 flex overflow-hidden\"><!-- Left Column: The Control Plane --><aside class=\"w-1/3 bg-white border-r border-slate-200 p-8 flex flex-col justify-between relative shadow-[4px_0_24px_rgba(0,0,0,0.02)] z-10\"><!-- Visual Load Balancer representation --><div><h2 class=\"text-xs font-black text-slate-400 uppercase tracking-widest mb-6\">Ingress Engine</h2><div class=\"border-2 border-indigo-100 bg-indigo-50 rounded-xl p-6 flex flex-col items-center justify-center text-center shadow-inner relative overflow-hidden\"><div class=\"absolute inset-0 bg-indigo-500 opacity-0 transition-opacity duration-300\" id=\"lb-pulse\"></div><div class=\"h-12 w-12 bg-indigo-600 text-white rounded-lg flex items-center justify-center mb-3 shadow-md z-10\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 12h-4l-3 9L9 3l-3 9H2\"></path></svg></div><span class=\"font-mono font-bold text-indigo-900 z-10\">Reverse Proxy</span> <span class=\"text-xs font-semibold text-indigo-500 mt-1 z-10\">localhost:3000/proxy</span></div></div><!-- Control Panel Forms --><div class=\"space-y-6\"><h2 class=\"text-xs font-black text-slate-400 uppercase tracking-widest\">Control Panel</h2><button hx-post=\"/spawn\" hx-target=\"#server-cluster\" hx-swap=\"beforeend\" class=\"w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 px-6 rounded-lg text-sm tracking-wide transition-colors shadow-md flex justify-center items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> Spawn Node</button><div class=\"bg-slate-50 border border-slate-200 rounded-xl p-4\"><div class=\"flex justify-between items-center mb-4\"><span class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest\">Load Blaster</span><div id=\"blast-status\" class=\"text-[10px] font-black text-slate-400 uppercase tracking-widest\">Standby</div></div><form hx-get=\"/blast\" hx-swap=\"none\" onsubmit=\"document.getElementById('lb-pulse').classList.add('opacity-20'); setTimeout(() => document.getElementById('lb-pulse').classList.remove('opacity-20'), 300)\" class=\"flex gap-2\"><input type=\"number\" name=\"count\" value=\"50\" min=\"1\" class=\"w-20 bg-white border border-slate-200 rounded-lg px-3 font-mono font-bold text-slate-700 outline-none focus:border-indigo-500 transition-colors\"> <button type=\"submit\" class=\"flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-2.5 px-4 rounded-lg text-sm tracking-wide transition-colors shadow-md\">Fire Traffic</button></form></div></div></aside><!-- Right Column: The Cluster Grid --><section class=\"w-2/3 bg-slate-50/50 p-8 overflow-y-auto relative\"><h2 class=\"text-xs font-black text-slate-400 uppercase tracking-widest mb-6\">Backend Topology</h2><div id=\"server-cluster\" class=\"grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 pb-20\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<!doctype html><html lang=\"en\" class=\"dark\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Mission Control | L7 Hyper-Proxy</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.11\"></script><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap\" rel=\"stylesheet\"><style>\n\t\t\t\tbody { font-family: 'Inter', sans-serif; }\n\t\t\t\t.font-mono { font-family: 'JetBrains Mono', monospace; }\n\t\t\t\t\n\t\t\t\t/* Background Grid Pattern */\n\t\t\t\t.bg-grid {\n\t\t\t\t\tbackground-size: 40px 40px;\n\t\t\t\t\tbackground-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),\n\t\t\t\t\t\t\t\t\t  linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);\n\t\t\t\t}\n\t\t\t</style></head><body class=\"bg-slate-950 text-slate-300 h-screen flex flex-col overflow-hidden selection:bg-cyan-500/30\"><!-- SVG Overlay for drawing lines --><svg id=\"animation-layer\" class=\"pointer-events-none fixed inset-0 w-full h-full z-50\"></svg><header class=\"shrink-0 border-b border-slate-800/60 bg-slate-900/50 backdrop-blur-xl p-5 z-20 flex justify-between items-center relative shadow-lg\"><div class=\"absolute bottom-0 left-0 h-[1px] w-full bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent\"></div><div class=\"flex items-center gap-3\"><div class=\"w-8 h-8 rounded bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-400\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"></path></svg></div><div><h1 class=\"text-xl font-black tracking-tighter text-white\">MISSION CONTROL</h1><p class=\"text-[10px] font-bold text-cyan-500 uppercase tracking-widest mt-0.5\">L7 Network Topology</p></div></div></header><main class=\"flex-1 flex overflow-hidden relative\"><!-- Left Column: The Control Plane --><aside class=\"w-80 bg-slate-900/40 border-r border-slate-800/60 p-6 flex flex-col gap-8 relative z-10 backdrop-blur-sm\"><!-- Visual Load Balancer representation --><div class=\"flex flex-col items-center mt-4\"><div class=\"w-full text-center mb-6\"><h2 class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest\">Ingress Engine</h2></div><div id=\"proxy-node\" class=\"relative w-32 h-32 rounded-full border-2 border-cyan-500/30 bg-slate-900/80 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.15)] z-20 transition-all duration-300\"><div class=\"absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse\"></div><!-- Inner glowing core --><div class=\"w-12 h-12 rounded-full bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.8)] flex items-center justify-center text-slate-900 relative z-10\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 12h-4l-3 9L9 3l-3 9H2\"></path></svg></div><span class=\"font-mono font-bold text-cyan-300 text-sm mt-3 z-10\">Proxy</span></div></div><!-- Control Panel Forms --><div class=\"space-y-5 flex-1 mt-6\"><h2 class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-800 pb-2\">Control Panel</h2><button hx-post=\"/spawn\" hx-target=\"#server-cluster\" hx-swap=\"beforeend\" class=\"w-full bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 font-bold py-3.5 px-4 rounded-lg text-sm transition-all shadow-md flex justify-center items-center gap-2 group\"><svg class=\"text-emerald-400 group-hover:scale-110 transition-transform\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> Deploy New Node</button><div class=\"bg-slate-900/60 border border-slate-800 rounded-xl p-5 shadow-inner mt-4\"><div class=\"flex justify-between items-center mb-5\"><span class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest\">Traffic Generator</span><div id=\"blast-status\" class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-800 px-2 py-1 rounded\">Standby</div></div><!-- Mode 1: Fire 1 --><button hx-get=\"/blast?count=1\" hx-swap=\"none\" onclick=\"triggerProxyPulse()\" class=\"w-full mb-4 bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 border border-cyan-600/50 font-bold py-2.5 px-4 rounded-lg text-sm tracking-wide transition-all shadow-[0_0_10px_rgba(6,182,212,0.1)] flex justify-center items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"></polygon></svg> Fire 1 Request</button><div class=\"w-full h-[1px] bg-slate-800 my-5\"></div><!-- Mode 2: Auto RPS --><div class=\"flex flex-col gap-3\"><div class=\"flex justify-between text-xs text-slate-400\"><span>Auto RPS Mode</span> <span id=\"rps-display\" class=\"font-mono text-cyan-400\">50 req/s</span></div><input type=\"range\" id=\"rps-slider\" min=\"1\" max=\"100\" value=\"50\" class=\"w-full accent-cyan-500 mb-2\" oninput=\"document.getElementById('rps-display').innerText = this.value + ' req/s'\"> <button id=\"auto-btn\" onclick=\"toggleAutoFire()\" class=\"w-full bg-slate-800 hover:bg-slate-700 text-white font-bold py-2.5 px-4 rounded-lg text-sm tracking-wide transition-colors border border-slate-700\">Start Auto Fire</button></div></div></div></aside><!-- Right Column: The Cluster Grid --><section class=\"flex-1 bg-slate-950 bg-grid p-8 overflow-y-auto relative z-0\"><!-- Invisible blast form for Auto Mode to trigger HTMX --><form id=\"auto-blast-form\" hx-get=\"/blast\" hx-swap=\"none\" class=\"hidden\"><input type=\"hidden\" name=\"count\" id=\"auto-blast-count\" value=\"50\"></form><div class=\"flex justify-between items-end mb-8\"><h2 class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest\">Backend Topology</h2><div class=\"flex items-center gap-2\"><span class=\"relative flex h-2 w-2\"><span class=\"animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75\"></span><span class=\"relative inline-flex rounded-full h-2 w-2 bg-emerald-500\"></span></span> <span class=\"text-[10px] text-slate-400 font-mono uppercase tracking-widest\">Live Sync</span></div></div><div id=\"server-cluster\" class=\"grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6 pb-20\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -233,7 +363,7 @@ func Dashboard(registry map[string]*cluster.Node) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</div></section></main></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></section></main><!-- Custom Scripting for Animations & Auto Mode --><script>\n\t\t\t\tfunction triggerProxyPulse() {\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tproxy.classList.add('scale-105', 'shadow-[0_0_50px_rgba(6,182,212,0.5)]');\n\t\t\t\t\tsetTimeout(() => {\n\t\t\t\t\t\tproxy.classList.remove('scale-105', 'shadow-[0_0_50px_rgba(6,182,212,0.5)]');\n\t\t\t\t\t}, 200);\n\t\t\t\t}\n\n\t\t\t\tlet autoInterval = null;\n\t\t\t\tfunction toggleAutoFire() {\n\t\t\t\t\tconst btn = document.getElementById('auto-btn');\n\t\t\t\t\tif (autoInterval) {\n\t\t\t\t\t\tclearInterval(autoInterval);\n\t\t\t\t\t\tautoInterval = null;\n\t\t\t\t\t\tbtn.innerText = \"Start Auto Fire\";\n\t\t\t\t\t\tbtn.classList.remove('bg-rose-600/20', 'text-rose-400', 'border-rose-600/50', 'hover:bg-rose-600/30');\n\t\t\t\t\t\tbtn.classList.add('bg-slate-800', 'text-white', 'border-slate-700', 'hover:bg-slate-700');\n\t\t\t\t\t} else {\n\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\tbtn.innerText = \"Stop Auto Fire\";\n\t\t\t\t\t\tbtn.classList.remove('bg-slate-800', 'text-white', 'border-slate-700', 'hover:bg-slate-700');\n\t\t\t\t\t\tbtn.classList.add('bg-rose-600/20', 'text-rose-400', 'border-rose-600/50', 'hover:bg-rose-600/30');\n\t\t\t\t\t\t\n\t\t\t\t\t\t// Fire every second\n\t\t\t\t\t\tautoInterval = setInterval(() => {\n\t\t\t\t\t\t\tconst val = document.getElementById('rps-slider').value;\n\t\t\t\t\t\t\tdocument.getElementById('auto-blast-count').value = val;\n\t\t\t\t\t\t\thtmx.trigger('#auto-blast-form', 'submit');\n\t\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tconst svgLayer = document.getElementById('animation-layer');\n\t\t\t\tconst reqHistory = new Map();\n\n\t\t\t\tdocument.body.addEventListener('htmx:afterSettle', function(evt) {\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tif (!proxy) return;\n\t\t\t\t\t\n\t\t\t\t\tconst proxyRect = proxy.getBoundingClientRect();\n\t\t\t\t\tconst startX = proxyRect.left + proxyRect.width / 2;\n\t\t\t\t\tconst startY = proxyRect.top + proxyRect.height / 2;\n\n\t\t\t\t\tconst nodes = document.querySelectorAll('.server-node');\n\t\t\t\t\tnodes.forEach(node => {\n\t\t\t\t\t\tconst port = node.getAttribute('data-port');\n\t\t\t\t\t\tconst tooltipContent = node.querySelector('.absolute .flex-col');\n\t\t\t\t\t\tif (!tooltipContent) return;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst reqsEl = tooltipContent.children[1]; // 2nd div is Total Reqs\n\t\t\t\t\t\tif (!reqsEl) return;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst reqsText = reqsEl.querySelector('span:last-child').innerText;\n\t\t\t\t\t\tconst currentReqs = parseInt(reqsText) || 0;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst prevReqs = reqHistory.get(port) || 0;\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (currentReqs > prevReqs) {\n\t\t\t\t\t\t\tconst numLines = Math.min(currentReqs - prevReqs, 3); // max 3 lines per node per tick to save cpu\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tconst targetRect = node.getBoundingClientRect();\n\t\t\t\t\t\t\tconst endX = targetRect.left + targetRect.width / 2;\n\t\t\t\t\t\t\tconst endY = targetRect.top + targetRect.height / 2;\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tfor (let i = 0; i < numLines; i++) {\n\t\t\t\t\t\t\t\tsetTimeout(() => drawParticle(startX, startY, endX, endY), i * 70);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\treqHistory.set(port, currentReqs);\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\tfunction drawParticle(x1, y1, x2, y2) {\n\t\t\t\t\tconst ns = \"http://www.w3.org/2000/svg\";\n\t\t\t\t\tconst path = document.createElementNS(ns, \"path\");\n\t\t\t\t\t\n\t\t\t\t\t// Add randomness for slight bezier curves\n\t\t\t\t\tconst cx = (x1 + x2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\tconst cy = (y1 + y2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\t\n\t\t\t\t\tconst d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;\n\t\t\t\t\tpath.setAttribute(\"d\", d);\n\t\t\t\t\tpath.setAttribute(\"fill\", \"none\");\n\t\t\t\t\tpath.setAttribute(\"stroke\", \"rgba(6, 182, 212, 0.6)\");\n\t\t\t\t\tpath.setAttribute(\"stroke-width\", \"2\");\n\t\t\t\t\tpath.setAttribute(\"stroke-linecap\", \"round\");\n\t\t\t\t\t\n\t\t\t\t\tsvgLayer.appendChild(path);\n\n\t\t\t\t\tconst length = path.getTotalLength();\n\t\t\t\t\tpath.setAttribute(\"stroke-dasharray\", `15, ${length}`);\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", length);\n\t\t\t\t\t\n\t\t\t\t\tpath.getBoundingClientRect(); // reflow\n\t\t\t\t\t\n\t\t\t\t\tpath.style.transition = \"stroke-dashoffset 0.5s ease-out, opacity 0.3s ease-in-out\";\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", \"0\");\n\t\t\t\t\t\n\t\t\t\t\tsetTimeout(() => { path.style.opacity = \"0\"; }, 200);\n\t\t\t\t\tsetTimeout(() => { if (svgLayer.contains(path)) svgLayer.removeChild(path); }, 500);\n\t\t\t\t}\n\t\t\t</script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

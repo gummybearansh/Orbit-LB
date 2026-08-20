@@ -13,6 +13,10 @@ type Node struct {
 	Port string
 	Status bool
 	RequestsHandled int
+	CreatedAt time.Time
+	CurrentRPS int
+	RequestsThisSec int
+	History []int
 }
 
 // global variables
@@ -27,6 +31,28 @@ var (
 	// active array for Round Robin Load balancing 
 	ActivePorts []string
 )
+
+func init() {
+	go func() {
+		ticker := time.NewTicker(1 * time.Second)
+		for range ticker.C {
+			RegistryMutex.Lock()
+			for _, node := range Registry {
+				if node.Status {
+					// Push to history
+					node.History = append(node.History, node.RequestsThisSec)
+					// Keep history to 20 data points (for sparkline)
+					if len(node.History) > 20 {
+						node.History = node.History[1:]
+					}
+					node.CurrentRPS = node.RequestsThisSec
+					node.RequestsThisSec = 0
+				}
+			}
+			RegistryMutex.Unlock()
+		}
+	}()
+}
 
 func GetPort() (string, error) {
 	PortMutex.Lock()
@@ -73,6 +99,7 @@ func SpawnServer(port string) {
 		var currentReqs int
 		if node, exists := Registry[port]; exists {
 			node.RequestsHandled++
+			node.RequestsThisSec++
 			currentReqs = node.RequestsHandled
 		}
 		RegistryMutex.Unlock() // Unlock instantly!
@@ -116,8 +143,15 @@ func SpawnServer(port string) {
 			Port: port,
 			Status: true,	
 			RequestsHandled: 0,
+			CreatedAt: time.Now(),
+			History: make([]int, 0, 20),
 		}
 		Registry[port] = registryServer
+	} else {
+		registryServer.CreatedAt = time.Now()
+		registryServer.History = make([]int, 0, 20)
+		registryServer.CurrentRPS = 0
+		registryServer.RequestsThisSec = 0
 	}
 	// also make sure it's added to the active servers 
 	ActivePorts = append(ActivePorts, port)
