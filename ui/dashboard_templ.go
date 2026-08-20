@@ -47,7 +47,17 @@ func sparklinePoints(history []int) string {
 	return points
 }
 
-// The inner contents of the server node, swapped via innerHTML
+func getUptimeStr(createdAt time.Time, format string) string {
+	sec := 20.0 - time.Since(createdAt).Seconds()
+	if sec <= 0 {
+		return "-"
+	}
+	if format == "tooltip" {
+		return fmt.Sprintf("%.0fs", sec)
+	}
+	return fmt.Sprintf("%.0fs up", sec)
+}
+
 func ServerNodeInner(node *cluster.Node) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -69,14 +79,14 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Tooltip on Hover --><div class=\"absolute -top-[4.5rem] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 w-48\"><div class=\"bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-2xl text-xs text-slate-300 flex flex-col gap-1\"><div class=\"flex justify-between\"><span class=\"text-slate-500\">Uptime:</span> <span class=\"font-bold text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"absolute -top-[4.5rem] left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-50 w-48\"><div class=\"bg-slate-800 border border-slate-700 p-3 rounded-lg shadow-2xl text-xs text-slate-300 flex flex-col gap-1\"><div class=\"flex justify-between\"><span class=\"text-slate-500\">Uptime:</span> <span class=\"font-bold text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0fs", 20-time.Since(node.CreatedAt).Seconds()))
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(getUptimeStr(node.CreatedAt, "tooltip"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 47, Col: 181}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 56, Col: 157}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -89,7 +99,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.RequestsHandled))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 48, Col: 156}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 57, Col: 156}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -102,20 +112,20 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.CurrentRPS))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 49, Col: 152}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 58, Col: 152}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div></div><div class=\"w-3 h-3 bg-slate-800 border-b border-r border-slate-700 transform rotate-45 mx-auto -mt-1.5\"></div></div><!-- Stats permanently visible --><div class=\"flex justify-between items-center mb-1\"><div class=\"flex items-center gap-2\"><div class=\"p-1.5 rounded-md bg-slate-800 border border-slate-700\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"text-indigo-400\"><rect x=\"2\" y=\"2\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><rect x=\"2\" y=\"14\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><line x1=\"6\" y1=\"6\" x2=\"6.01\" y2=\"6\"></line><line x1=\"6\" y1=\"18\" x2=\"6.01\" y2=\"18\"></line></svg></div><span class=\"font-bold text-slate-200 text-sm\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</span></div></div><div class=\"w-3 h-3 bg-slate-800 border-b border-r border-slate-700 transform rotate-45 mx-auto -mt-1.5\"></div></div><div class=\"flex justify-between items-center mb-1\"><div class=\"flex items-center gap-2\"><div class=\"p-1.5 rounded-md bg-slate-800/80 border border-slate-700\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" class=\"text-indigo-400\"><rect x=\"2\" y=\"2\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><rect x=\"2\" y=\"14\" width=\"20\" height=\"8\" rx=\"2\" ry=\"2\"></rect><line x1=\"6\" y1=\"6\" x2=\"6.01\" y2=\"6\"></line><line x1=\"6\" y1=\"18\" x2=\"6.01\" y2=\"18\"></line></svg></div><span class=\"font-bold text-slate-200 text-sm\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(node.Port)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 60, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 68, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -143,7 +153,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(node.CurrentRPS))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 73, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 81, Col: 39}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -154,15 +164,15 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.0fs", 20-time.Since(node.CreatedAt).Seconds()))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(getUptimeStr(node.CreatedAt, "inline"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 74, Col: 73}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 82, Col: 48}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " up</span></div><!-- Sparkline Graph --><div class=\"w-full h-8 relative\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></div><div class=\"w-full h-8 relative\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -174,7 +184,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.ResolveAttributeValue("grad-" + node.Port[1:])
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 82, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 89, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8)
 			if templ_7745c5c3_Err != nil {
@@ -187,7 +197,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.ResolveAttributeValue(sparklinePoints(node.History))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 88, Col: 43}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 95, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var9)
 			if templ_7745c5c3_Err != nil {
@@ -200,7 +210,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.ResolveAttributeValue(sparklinePoints(node.History) + " 100,40 0,40")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 97, Col: 60}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 104, Col: 60}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var10)
 			if templ_7745c5c3_Err != nil {
@@ -213,7 +223,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.ResolveAttributeValue(fmt.Sprintf("url(#grad-%s)", node.Port[1:]))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 98, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 105, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 			if templ_7745c5c3_Err != nil {
@@ -224,7 +234,7 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"w-full h-full flex items-center justify-center border-t border-slate-800/50\"><span class=\"text-[10px] text-rose-500/50 uppercase tracking-widest\">Offline</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"w-full h-full flex items-center justify-center border-t border-slate-800/50\"><span class=\"text-[10px] text-rose-500/50 uppercase tracking-widest mt-1\">Offline</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -237,7 +247,6 @@ func ServerNodeInner(node *cluster.Node) templ.Component {
 	})
 }
 
-// Wrapper component
 func ServerNodeWrapper(node *cluster.Node) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -259,8 +268,8 @@ func ServerNodeWrapper(node *cluster.Node) templ.Component {
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var13 = []any{"server-node absolute group p-3 rounded-xl border flex flex-col font-mono cursor-pointer w-40 transform -translate-x-1/2 -translate-y-1/2",
-			templ.KV("bg-slate-900/60 border-emerald-500/30 hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]", node.Status),
+		var templ_7745c5c3_Var13 = []any{"server-node absolute group p-3 rounded-xl border flex flex-col font-mono cursor-pointer w-40 transform -translate-x-1/2 -translate-y-1/2 backdrop-blur-md",
+			templ.KV("bg-slate-900/70 border-emerald-500/30 hover:border-emerald-400 hover:shadow-[0_0_15px_rgba(16,185,129,0.3)]", node.Status),
 			templ.KV("bg-slate-900/40 border-rose-500/20 opacity-40", !node.Status)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 		if templ_7745c5c3_Err != nil {
@@ -273,7 +282,7 @@ func ServerNodeWrapper(node *cluster.Node) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.ResolveAttributeValue("node-" + node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 112, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 118, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14)
 		if templ_7745c5c3_Err != nil {
@@ -286,7 +295,7 @@ func ServerNodeWrapper(node *cluster.Node) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.ResolveAttributeValue(node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 113, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 119, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 		if templ_7745c5c3_Err != nil {
@@ -305,14 +314,14 @@ func ServerNodeWrapper(node *cluster.Node) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" style=\"left: 0; top: 0; transition: left 1s ease-out, top 1s ease-out, opacity 0.5s;\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" style=\"left: 0; top: 0;\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.ResolveAttributeValue("/health?port=" + node.Port[1:])
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 118, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 124, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var17)
 		if templ_7745c5c3_Err != nil {
@@ -334,10 +343,7 @@ func ServerNodeWrapper(node *cluster.Node) templ.Component {
 	})
 }
 
-// To maintain compatibility with handlers.go without changing too much:
-// HandleSpawn needs the wrapper.
-// HandleHealth needs only the inner HTML.
-func ServerCard(node *cluster.Node, isOOB bool) templ.Component {
+func BlastResult(count string, registry map[string]*cluster.Node) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -358,63 +364,21 @@ func ServerCard(node *cluster.Node, isOOB bool) templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		return nil
-	})
-}
-
-func BlastResult(count string, registry map[string]*cluster.Node) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div id=\"blast-status\" hx-swap-oob=\"true\" class=\"text-[10px] font-black text-cyan-400 uppercase tracking-widest bg-cyan-900/30 border border-cyan-800/50 px-2 py-1 rounded\">Burst: ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(count)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 137, Col: 16}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		for _, node := range registry {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var21 string
-			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.ResolveAttributeValue("node-" + node.Port[1:])
+			var templ_7745c5c3_Var19 string
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.ResolveAttributeValue("node-" + node.Port[1:])
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 141, Col: 35}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `ui/dashboard.templ`, Line: 134, Col: 35}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var19)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" hx-swap-oob=\"innerHTML\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" hx-swap-oob=\"innerHTML\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -422,7 +386,7 @@ func BlastResult(count string, registry map[string]*cluster.Node) templ.Componen
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -447,12 +411,12 @@ func Dashboard(registry map[string]*cluster.Node) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var22 == nil {
-			templ_7745c5c3_Var22 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<!doctype html><html lang=\"en\" class=\"dark\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Load Balancer Visualisation</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.11\"></script><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap\" rel=\"stylesheet\"><style>\n\t\t\t\tbody { font-family: 'Inter', sans-serif; }\n\t\t\t\t.font-mono { font-family: 'JetBrains Mono', monospace; }\n\t\t\t\t\n\t\t\t\t.bg-grid {\n\t\t\t\t\tbackground-size: 40px 40px;\n\t\t\t\t\tbackground-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),\n\t\t\t\t\t\t\t\t\t  linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);\n\t\t\t\t}\n\n\t\t\t\t@keyframes floatAnim {\n\t\t\t\t\t0%, 100% { transform: translate(-50%, -50%) translateY(0px) rotate(0deg); }\n\t\t\t\t\t50% { transform: translate(-50%, -50%) translateY(-10px) rotate(1deg); }\n\t\t\t\t}\n\n\t\t\t\t.floating {\n\t\t\t\t\tanimation: floatAnim 4s ease-in-out infinite;\n\t\t\t\t}\n\t\t\t</style></head><body class=\"bg-slate-950 text-slate-300 h-screen flex flex-col overflow-hidden selection:bg-cyan-500/30\"><div id=\"toast-container\" class=\"fixed top-5 right-5 z-50 flex flex-col gap-2\"></div><!-- SVG Overlay for drawing lines --><svg id=\"animation-layer\" class=\"pointer-events-none fixed inset-0 w-full h-full z-40\"></svg><main class=\"flex-1 relative overflow-hidden bg-slate-950 bg-grid\"><!-- Load Balancer Node (Left Side) --><div class=\"absolute left-20 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center\"><div class=\"w-full text-center mb-4\"><h2 class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest\">Reverse Proxy</h2></div><div id=\"proxy-node\" class=\"relative w-32 h-32 rounded-full border-2 border-cyan-500/30 bg-slate-900/80 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(6,182,212,0.15)] transition-all duration-300\"><div class=\"absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse\"></div><div class=\"w-12 h-12 rounded-full bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.8)] flex items-center justify-center text-slate-900 relative z-10\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M22 12h-4l-3 9L9 3l-3 9H2\"></path></svg></div></div></div><!-- Servers Cluster Container (Concentric Layout) --><div id=\"server-cluster\" class=\"absolute inset-0 z-20\"><!-- Invisible blast form for Auto Mode to trigger HTMX --><form id=\"auto-blast-form\" hx-get=\"/blast\" hx-swap=\"none\" class=\"hidden\"><input type=\"hidden\" name=\"count\" id=\"auto-blast-count\" value=\"50\"></form>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<!doctype html><html lang=\"en\" class=\"dark\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>Orbit-LB</title><script src=\"https://cdn.tailwindcss.com\"></script><script src=\"https://unpkg.com/htmx.org@1.9.11\"></script><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;700;800&display=swap\" rel=\"stylesheet\"><style>\n\t\t\t\tbody { font-family: 'Inter', sans-serif; }\n\t\t\t\t.font-mono { font-family: 'JetBrains Mono', monospace; }\n\t\t\t\t\n\t\t\t\t.bg-grid {\n\t\t\t\t\tbackground-size: 50px 50px;\n\t\t\t\t\tbackground-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),\n\t\t\t\t\t\t\t\t\t  linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);\n\t\t\t\t}\n\t\t\t\t\n\t\t\t\t.btn-glass {\n\t\t\t\t\tbackground: linear-gradient(145deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.9) 100%);\n\t\t\t\t\tborder: 1px solid rgba(255,255,255,0.1);\n\t\t\t\t\tbox-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 4px 6px rgba(0,0,0,0.3);\n\t\t\t\t}\n\t\t\t\t.btn-glass:hover {\n\t\t\t\t\tbackground: linear-gradient(145deg, rgba(51,65,85,0.8) 0%, rgba(30,41,59,1) 100%);\n\t\t\t\t\tborder-color: rgba(255,255,255,0.2);\n\t\t\t\t}\n\t\t\t</style></head><body class=\"bg-slate-950 text-slate-300 h-screen flex flex-col overflow-hidden selection:bg-cyan-500/30 relative\"><div id=\"toast-container\" class=\"fixed top-5 right-5 z-50 flex flex-col gap-2\"></div><!-- Main Arena where scaling occurs --><main class=\"flex-1 relative overflow-hidden bg-slate-950 bg-grid w-full h-full\"><div id=\"arena\" class=\"absolute inset-0 origin-center transition-transform duration-700 ease-out\"><!-- SVG Overlay for drawing lines --><svg id=\"animation-layer\" class=\"pointer-events-none absolute inset-0 w-full h-full z-40 overflow-visible\"></svg><!-- Load Balancer Node (Center Left) --><div class=\"absolute left-24 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center\"><div class=\"w-full text-center mb-4\"><h2 class=\"text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-900/50 px-2 py-1 rounded backdrop-blur border border-slate-800\">Reverse Proxy</h2></div><div id=\"proxy-node\" class=\"relative w-28 h-28 rounded-full border-2 border-cyan-500/30 bg-slate-900/80 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.15)] transition-all duration-300 backdrop-blur-md\"><div class=\"absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse\"></div><div class=\"w-10 h-10 rounded-full bg-gradient-to-br from-cyan-400 to-blue-600 shadow-[0_0_20px_rgba(6,182,212,0.8)] flex items-center justify-center text-slate-900 relative z-10\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"text-white\"><path d=\"M22 12h-4l-3 9L9 3l-3 9H2\"></path></svg></div></div></div><!-- Servers Cluster Container --><div id=\"server-cluster\" class=\"absolute inset-0 z-20\"><!-- Invisible blast form for Auto Mode --><form id=\"auto-blast-form\" hx-get=\"/blast\" hx-swap=\"none\" class=\"hidden\"><input type=\"hidden\" name=\"count\" id=\"auto-blast-count\" value=\"50\"></form>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -462,7 +426,7 @@ func Dashboard(registry map[string]*cluster.Node) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></main><!-- Bottom Controller --><footer class=\"h-28 shrink-0 bg-slate-900/90 border-t border-slate-800/80 backdrop-blur-xl z-50 flex items-center justify-between px-10 shadow-[0_-10px_30px_rgba(0,0,0,0.3)]\"><div class=\"flex items-center gap-3\"><div class=\"w-8 h-8 rounded bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-400\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><path d=\"M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5\"></path></svg></div><div><h1 class=\"text-lg font-black tracking-tighter text-white uppercase\">Load Balancer</h1><p class=\"text-[10px] font-bold text-cyan-500 uppercase tracking-widest mt-0.5\">Control Panel</p></div></div><div class=\"flex items-center gap-8\"><button hx-post=\"/spawn\" hx-target=\"#server-cluster\" hx-swap=\"beforeend\" class=\"bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 hover:border-slate-500 font-bold py-2.5 px-6 rounded-lg text-sm transition-all shadow-md flex items-center gap-2 group\"><svg class=\"text-emerald-400 group-hover:scale-110 transition-transform\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg> Deploy New Node</button><div class=\"w-px h-10 bg-slate-800\"></div><div class=\"flex items-center gap-6\"><button hx-get=\"/blast?count=1\" hx-swap=\"none\" onclick=\"triggerProxyPulse()\" class=\"bg-cyan-600/20 hover:bg-cyan-600/40 text-cyan-400 border border-cyan-600/50 font-bold py-2.5 px-6 rounded-lg text-sm tracking-wide transition-all flex items-center gap-2\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"></polygon></svg> Fire 1 Request</button><div class=\"flex flex-col gap-1 w-48\"><div class=\"flex justify-between text-[10px] text-slate-400 font-black uppercase tracking-widest\"><span>Auto RPS</span> <span id=\"rps-display\" class=\"text-cyan-400\">50</span></div><div class=\"flex items-center gap-3\"><input type=\"range\" id=\"rps-slider\" min=\"1\" max=\"100\" value=\"50\" class=\"w-full accent-cyan-500\" oninput=\"document.getElementById('rps-display').innerText = this.value\"> <button id=\"auto-btn\" onclick=\"toggleAutoFire()\" class=\"bg-slate-800 hover:bg-slate-700 text-white font-bold py-1.5 px-3 rounded-md text-xs transition-colors border border-slate-700 whitespace-nowrap\">Start Auto</button></div></div></div></div></footer><script>\n\t\t\t\t// Toast notification system\n\t\t\t\tfunction showToast(message) {\n\t\t\t\t\tconst container = document.getElementById('toast-container');\n\t\t\t\t\tconst toast = document.createElement('div');\n\t\t\t\t\ttoast.className = 'bg-rose-900/80 border border-rose-500/50 text-rose-200 text-xs font-bold px-4 py-3 rounded shadow-lg transition-all duration-300 transform translate-x-full';\n\t\t\t\t\ttoast.innerText = message;\n\t\t\t\t\tcontainer.appendChild(toast);\n\t\t\t\t\t\n\t\t\t\t\tsetTimeout(() => { toast.classList.remove('translate-x-full'); }, 50);\n\t\t\t\t\tsetTimeout(() => { \n\t\t\t\t\t\ttoast.classList.add('translate-x-full');\n\t\t\t\t\t\tsetTimeout(() => { toast.remove(); }, 300);\n\t\t\t\t\t}, 3000);\n\t\t\t\t}\n\n\t\t\t\t// Proxy Pulse\n\t\t\t\tfunction triggerProxyPulse() {\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tif(proxy) {\n\t\t\t\t\t\tproxy.classList.add('scale-105', 'shadow-[0_0_50px_rgba(6,182,212,0.5)]');\n\t\t\t\t\t\tsetTimeout(() => { proxy.classList.remove('scale-105', 'shadow-[0_0_50px_rgba(6,182,212,0.5)]'); }, 200);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Auto RPS Logic\n\t\t\t\tlet autoInterval = null;\n\t\t\t\tfunction toggleAutoFire() {\n\t\t\t\t\tconst btn = document.getElementById('auto-btn');\n\t\t\t\t\tif (autoInterval) {\n\t\t\t\t\t\tclearInterval(autoInterval);\n\t\t\t\t\t\tautoInterval = null;\n\t\t\t\t\t\tbtn.innerText = \"Start Auto\";\n\t\t\t\t\t\tbtn.classList.remove('bg-rose-600/20', 'text-rose-400', 'border-rose-600/50', 'hover:bg-rose-600/30');\n\t\t\t\t\t\tbtn.classList.add('bg-slate-800', 'text-white', 'border-slate-700', 'hover:bg-slate-700');\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// Check active servers\n\t\t\t\t\t\tconst activeServers = document.querySelectorAll('.server-node');\n\t\t\t\t\t\tif(activeServers.length === 0) {\n\t\t\t\t\t\t\tshowToast(\"Auto-fire blocked: No servers online.\");\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\tbtn.innerText = \"Stop Auto\";\n\t\t\t\t\t\tbtn.classList.remove('bg-slate-800', 'text-white', 'border-slate-700', 'hover:bg-slate-700');\n\t\t\t\t\t\tbtn.classList.add('bg-rose-600/20', 'text-rose-400', 'border-rose-600/50', 'hover:bg-rose-600/30');\n\t\t\t\t\t\t\n\t\t\t\t\t\tautoInterval = setInterval(() => {\n\t\t\t\t\t\t\tconst currentServers = document.querySelectorAll('.server-node');\n\t\t\t\t\t\t\tif(currentServers.length === 0) {\n\t\t\t\t\t\t\t\ttoggleAutoFire();\n\t\t\t\t\t\t\t\tshowToast(\"Auto-fire stopped: All servers offline.\");\n\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tconst val = document.getElementById('rps-slider').value;\n\t\t\t\t\t\t\tdocument.getElementById('auto-blast-count').value = val;\n\t\t\t\t\t\t\thtmx.trigger('#auto-blast-form', 'submit');\n\t\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Concentric Layout Calculation\n\t\t\t\tfunction layoutNodes() {\n\t\t\t\t\tconst nodes = Array.from(document.querySelectorAll('.server-node'));\n\t\t\t\t\tif (nodes.length === 0) return;\n\n\t\t\t\t\t// Base center coordinates (Left side where proxy is)\n\t\t\t\t\t// Proxy left is 5rem (80px), proxy width is 8rem (128px) -> Center X is 80 + 64 = 144\n\t\t\t\t\t// Center Y is 50%\n\t\t\t\t\tconst centerX = 144;\n\t\t\t\t\tconst containerHeight = document.getElementById('server-cluster').clientHeight;\n\t\t\t\t\tconst centerY = containerHeight / 2;\n\n\t\t\t\t\tconst baseRadius = 250;\n\t\t\t\t\tconst radiusStep = 180;\n\t\t\t\t\t\n\t\t\t\t\t// Group nodes into rings based on capacity per ring\n\t\t\t\t\t// Ring 0: 3 nodes, Ring 1: 5 nodes, Ring 2: 7 nodes, etc.\n\t\t\t\t\tlet currentRing = 0;\n\t\t\t\t\tlet nodesInCurrentRing = 0;\n\t\t\t\t\tlet capacityOfCurrentRing = 3;\n\n\t\t\t\t\tnodes.forEach((node, i) => {\n\t\t\t\t\t\tif (nodesInCurrentRing >= capacityOfCurrentRing) {\n\t\t\t\t\t\t\tcurrentRing++;\n\t\t\t\t\t\t\tnodesInCurrentRing = 0;\n\t\t\t\t\t\t\tcapacityOfCurrentRing = 3 + (currentRing * 2);\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tconst radius = baseRadius + (currentRing * radiusStep);\n\t\t\t\t\t\t\n\t\t\t\t\t\t// Angle spans from -60 deg to +60 deg to form a semi-circle pointing right\n\t\t\t\t\t\tlet angleDeg = 0;\n\t\t\t\t\t\tif (capacityOfCurrentRing > 1) {\n\t\t\t\t\t\t\tconst minAngle = -70;\n\t\t\t\t\t\t\tconst maxAngle = 70;\n\t\t\t\t\t\t\tconst step = (maxAngle - minAngle) / (capacityOfCurrentRing - 1);\n\t\t\t\t\t\t\tangleDeg = minAngle + (nodesInCurrentRing * step);\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tconst angleRad = angleDeg * (Math.PI / 180);\n\t\t\t\t\t\tconst x = centerX + Math.cos(angleRad) * radius;\n\t\t\t\t\t\tconst y = centerY + Math.sin(angleRad) * radius;\n\n\t\t\t\t\t\t// Apply position\n\t\t\t\t\t\tnode.style.left = `${x}px`;\n\t\t\t\t\t\tnode.style.top = `${y}px`;\n\t\t\t\t\t\t\n\t\t\t\t\t\t// Add floating animation class if not present\n\t\t\t\t\t\tif (!node.classList.contains('floating')) {\n\t\t\t\t\t\t\tnode.classList.add('floating');\n\t\t\t\t\t\t\t// Stagger animation based on index\n\t\t\t\t\t\t\tnode.style.animationDelay = `${(i * 0.2) % 2}s`;\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tnodesInCurrentRing++;\n\t\t\t\t\t});\n\t\t\t\t}\n\n\t\t\t\t// Run layout on load and after window resize\n\t\t\t\twindow.addEventListener('load', layoutNodes);\n\t\t\t\twindow.addEventListener('resize', layoutNodes);\n\n\t\t\t\t// Traffic Line Animation System\n\t\t\t\tconst svgLayer = document.getElementById('animation-layer');\n\t\t\t\tconst reqHistory = new Map();\n\n\t\t\t\tdocument.body.addEventListener('htmx:afterSettle', function(evt) {\n\t\t\t\t\t// Layout nodes if new nodes were added (or removed)\n\t\t\t\t\tlayoutNodes();\n\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tif (!proxy) return;\n\t\t\t\t\t\n\t\t\t\t\tconst proxyRect = proxy.getBoundingClientRect();\n\t\t\t\t\tconst startX = proxyRect.left + proxyRect.width / 2;\n\t\t\t\t\tconst startY = proxyRect.top + proxyRect.height / 2;\n\n\t\t\t\t\tconst nodes = document.querySelectorAll('.server-node');\n\t\t\t\t\tnodes.forEach(node => {\n\t\t\t\t\t\tconst port = node.getAttribute('data-port');\n\t\t\t\t\t\t// Find total reqs in tooltip\n\t\t\t\t\t\tconst tooltip = node.querySelector('.absolute.-top-\\\\[4\\\\.5rem\\\\]');\n\t\t\t\t\t\tif(!tooltip) return;\n\t\t\t\t\t\tconst reqsEl = tooltip.querySelectorAll('.flex.justify-between')[1];\n\t\t\t\t\t\tif (!reqsEl) return;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst reqsText = reqsEl.querySelector('span:last-child').innerText;\n\t\t\t\t\t\tconst currentReqs = parseInt(reqsText) || 0;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst prevReqs = reqHistory.get(port) || 0;\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (currentReqs > prevReqs) {\n\t\t\t\t\t\t\tconst numLines = Math.min(currentReqs - prevReqs, 3);\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tconst targetRect = node.getBoundingClientRect();\n\t\t\t\t\t\t\tconst endX = targetRect.left + targetRect.width / 2;\n\t\t\t\t\t\t\tconst endY = targetRect.top + targetRect.height / 2;\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tfor (let i = 0; i < numLines; i++) {\n\t\t\t\t\t\t\t\tsetTimeout(() => drawParticle(startX, startY, endX, endY), i * 70);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\treqHistory.set(port, currentReqs);\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\tfunction drawParticle(x1, y1, x2, y2) {\n\t\t\t\t\tconst ns = \"http://www.w3.org/2000/svg\";\n\t\t\t\t\tconst path = document.createElementNS(ns, \"path\");\n\t\t\t\t\t\n\t\t\t\t\tconst cx = (x1 + x2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\tconst cy = (y1 + y2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\t\n\t\t\t\t\tconst d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;\n\t\t\t\t\tpath.setAttribute(\"d\", d);\n\t\t\t\t\tpath.setAttribute(\"fill\", \"none\");\n\t\t\t\t\tpath.setAttribute(\"stroke\", \"rgba(6, 182, 212, 0.6)\");\n\t\t\t\t\tpath.setAttribute(\"stroke-width\", \"2\");\n\t\t\t\t\tpath.setAttribute(\"stroke-linecap\", \"round\");\n\t\t\t\t\t\n\t\t\t\t\tsvgLayer.appendChild(path);\n\n\t\t\t\t\tconst length = path.getTotalLength();\n\t\t\t\t\tpath.setAttribute(\"stroke-dasharray\", `15, ${length}`);\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", length);\n\t\t\t\t\t\n\t\t\t\t\tpath.getBoundingClientRect(); // reflow\n\t\t\t\t\t\n\t\t\t\t\tpath.style.transition = \"stroke-dashoffset 0.5s ease-out, opacity 0.3s ease-in-out\";\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", \"0\");\n\t\t\t\t\t\n\t\t\t\t\tsetTimeout(() => { path.style.opacity = \"0\"; }, 200);\n\t\t\t\t\tsetTimeout(() => { if (svgLayer.contains(path)) svgLayer.removeChild(path); }, 500);\n\t\t\t\t}\n\t\t\t</script></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div></main><!-- Premium Bottom Controller --><footer class=\"h-24 shrink-0 bg-slate-900/95 border-t border-slate-800/80 backdrop-blur-2xl z-50 flex items-center justify-between px-8 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]\"><div class=\"flex items-center gap-4\"><div class=\"w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-[0_0_15px_rgba(6,182,212,0.4)]\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2.5\" class=\"text-white\"><path d=\"M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6\"></path></svg></div><div class=\"flex flex-col\"><h1 class=\"text-lg font-black tracking-tighter text-white uppercase leading-none\">Orbit-LB</h1><p class=\"text-[10px] font-bold text-cyan-500 uppercase tracking-widest mt-1\">Control Panel</p></div></div><!-- Center Controls --><div class=\"flex items-center gap-4 bg-slate-950/50 p-2 rounded-2xl border border-slate-800/50\"><!-- Spawn Button --><button hx-post=\"/spawn\" hx-target=\"#server-cluster\" hx-swap=\"beforeend\" class=\"btn-glass text-emerald-400 font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 group\"><div class=\"bg-emerald-500/20 p-1 rounded-md group-hover:bg-emerald-500/30 transition-colors\"><svg class=\"text-emerald-400\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"12\" y1=\"5\" x2=\"12\" y2=\"19\"></line><line x1=\"5\" y1=\"12\" x2=\"19\" y2=\"12\"></line></svg></div>Add Node</button><div class=\"w-px h-8 bg-slate-800\"></div><!-- Fire 1 Button --><button hx-get=\"/blast?count=1\" hx-swap=\"none\" onclick=\"triggerProxyPulse()\" class=\"btn-glass text-cyan-300 font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2 group\"><div class=\"bg-cyan-500/20 p-1 rounded-md group-hover:bg-cyan-500/30 transition-colors\"><svg class=\"text-cyan-400\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"13 2 3 14 12 14 11 22 21 10 12 10 13 2\"></polygon></svg></div>Fire 1</button><div class=\"w-px h-8 bg-slate-800\"></div><!-- Auto RPS Mode --><div class=\"flex items-center gap-3 px-3\"><div class=\"flex flex-col items-center\"><span class=\"text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1\">Reqs/Sec</span> <span id=\"rps-display\" class=\"font-mono text-cyan-400 text-xs font-bold\">50</span></div><input type=\"range\" id=\"rps-slider\" min=\"1\" max=\"100\" value=\"50\" class=\"w-24 accent-cyan-500\" oninput=\"document.getElementById('rps-display').innerText = this.value\"> <button id=\"auto-btn\" onclick=\"toggleAutoFire()\" class=\"btn-glass text-white font-bold py-2.5 px-5 rounded-xl text-sm transition-all flex items-center gap-2\"><div class=\"bg-slate-700 p-1 rounded-md\" id=\"auto-icon-bg\"><svg id=\"auto-icon\" class=\"text-slate-300\" xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polygon points=\"5 3 19 12 5 21 5 3\"></polygon></svg></div>Auto</button></div></div><!-- Right Side: Credits --><div class=\"flex items-center gap-3\"><div class=\"flex flex-col items-end text-right\"><span class=\"text-[10px] text-slate-500 font-bold uppercase tracking-widest\">Built by</span> <span class=\"text-xs font-black text-slate-300\">Gummybearansh</span></div><a href=\"https://github.com/gummybearansh/orbit-lb\" target=\"_blank\" class=\"w-10 h-10 rounded-full bg-slate-800 border border-slate-700 hover:border-slate-500 hover:bg-slate-700 flex items-center justify-center transition-all shadow-md group\"><svg class=\"text-slate-400 group-hover:text-white transition-colors\" xmlns=\"http://www.w3.org/2000/svg\" width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22\"></path></svg></a></div></footer><script>\n\t\t\t\tfunction showToast(message) {\n\t\t\t\t\tconst container = document.getElementById('toast-container');\n\t\t\t\t\tconst toast = document.createElement('div');\n\t\t\t\t\ttoast.className = 'bg-rose-900/90 border border-rose-500/50 text-rose-100 text-xs font-bold px-4 py-3 rounded-lg shadow-2xl transition-all duration-300 transform translate-x-full backdrop-blur-md';\n\t\t\t\t\ttoast.innerText = message;\n\t\t\t\t\tcontainer.appendChild(toast);\n\t\t\t\t\t\n\t\t\t\t\tsetTimeout(() => { toast.classList.remove('translate-x-full'); }, 50);\n\t\t\t\t\tsetTimeout(() => { \n\t\t\t\t\t\ttoast.classList.add('translate-x-full');\n\t\t\t\t\t\tsetTimeout(() => { toast.remove(); }, 300);\n\t\t\t\t\t}, 3000);\n\t\t\t\t}\n\n\t\t\t\tfunction triggerProxyPulse() {\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tif(proxy) {\n\t\t\t\t\t\tproxy.classList.add('scale-105', 'shadow-[0_0_60px_rgba(6,182,212,0.6)]');\n\t\t\t\t\t\tsetTimeout(() => { proxy.classList.remove('scale-105', 'shadow-[0_0_60px_rgba(6,182,212,0.6)]'); }, 200);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tlet autoInterval = null;\n\t\t\t\tfunction toggleAutoFire() {\n\t\t\t\t\tconst btn = document.getElementById('auto-btn');\n\t\t\t\t\tconst iconBg = document.getElementById('auto-icon-bg');\n\t\t\t\t\tconst icon = document.getElementById('auto-icon');\n\t\t\t\t\t\n\t\t\t\t\tif (autoInterval) {\n\t\t\t\t\t\tclearInterval(autoInterval);\n\t\t\t\t\t\tautoInterval = null;\n\t\t\t\t\t\tbtn.classList.remove('text-rose-400');\n\t\t\t\t\t\tbtn.classList.add('text-white');\n\t\t\t\t\t\ticonBg.classList.remove('bg-rose-500/20');\n\t\t\t\t\t\ticonBg.classList.add('bg-slate-700');\n\t\t\t\t\t\ticon.classList.remove('text-rose-400');\n\t\t\t\t\t\ticon.classList.add('text-slate-300');\n\t\t\t\t\t\ticon.innerHTML = '<polygon points=\"5 3 19 12 5 21 5 3\"></polygon>'; // Play\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst activeServers = document.querySelectorAll('.server-node');\n\t\t\t\t\t\tif(activeServers.length === 0) {\n\t\t\t\t\t\t\tshowToast(\"Auto-fire blocked: No servers online.\");\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\tbtn.classList.remove('text-white');\n\t\t\t\t\t\tbtn.classList.add('text-rose-400');\n\t\t\t\t\t\ticonBg.classList.remove('bg-slate-700');\n\t\t\t\t\t\ticonBg.classList.add('bg-rose-500/20');\n\t\t\t\t\t\ticon.classList.remove('text-slate-300');\n\t\t\t\t\t\ticon.classList.add('text-rose-400');\n\t\t\t\t\t\ticon.innerHTML = '<rect x=\"6\" y=\"4\" width=\"4\" height=\"16\"></rect><rect x=\"14\" y=\"4\" width=\"4\" height=\"16\"></rect>'; // Pause\n\t\t\t\t\t\t\n\t\t\t\t\t\tautoInterval = setInterval(() => {\n\t\t\t\t\t\t\tconst currentServers = document.querySelectorAll('.server-node');\n\t\t\t\t\t\t\tif(currentServers.length === 0) {\n\t\t\t\t\t\t\t\ttoggleAutoFire();\n\t\t\t\t\t\t\t\tshowToast(\"Auto-fire stopped: All servers offline.\");\n\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\tconst val = document.getElementById('rps-slider').value;\n\t\t\t\t\t\t\tdocument.getElementById('auto-blast-count').value = val;\n\t\t\t\t\t\t\thtmx.trigger('#auto-blast-form', 'submit');\n\t\t\t\t\t\t\ttriggerProxyPulse();\n\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Global state for orbiting logic and dynamic zoom\n\t\t\t\tlet globalTime = 0;\n\t\t\t\tlet currentScale = 1.0;\n\n\t\t\t\tfunction layoutAndAnimate() {\n\t\t\t\t\tglobalTime += 0.005; // speed of orbit\n\n\t\t\t\t\tconst nodes = Array.from(document.querySelectorAll('.server-node'));\n\t\t\t\t\tif (nodes.length === 0) {\n\t\t\t\t\t\trequestAnimationFrame(layoutAndAnimate);\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\n\t\t\t\t\t// Center coordinates (Proxy is around left: 96px, plus half width 56px = 152px approx)\n\t\t\t\t\tconst proxyRect = document.getElementById('proxy-node').getBoundingClientRect();\n\t\t\t\t\t// Since arena can scale, we calculate base coordinates without scale\n\t\t\t\t\tconst centerX = 152; \n\t\t\t\t\tconst centerY = window.innerHeight / 2;\n\n\t\t\t\t\tconst baseRadius = 250;\n\t\t\t\t\tconst radiusStep = 180;\n\t\t\t\t\t\n\t\t\t\t\tlet currentRing = 0;\n\t\t\t\t\tlet nodesInCurrentRing = 0;\n\t\t\t\t\tlet capacityOfCurrentRing = 3;\n\t\t\t\t\tlet maxRadiusUsed = baseRadius;\n\n\t\t\t\t\tnodes.forEach((node, i) => {\n\t\t\t\t\t\tif (nodesInCurrentRing >= capacityOfCurrentRing) {\n\t\t\t\t\t\t\tcurrentRing++;\n\t\t\t\t\t\t\tnodesInCurrentRing = 0;\n\t\t\t\t\t\t\tcapacityOfCurrentRing = 3 + (currentRing * 2);\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\tconst radius = baseRadius + (currentRing * radiusStep);\n\t\t\t\t\t\tif (radius > maxRadiusUsed) maxRadiusUsed = radius;\n\t\t\t\t\t\t\n\t\t\t\t\t\t// Angle spans from -60 deg to +60 deg to form a semi-circle pointing right\n\t\t\t\t\t\tlet angleDeg = 0;\n\t\t\t\t\t\tif (capacityOfCurrentRing > 1) {\n\t\t\t\t\t\t\tconst minAngle = -70;\n\t\t\t\t\t\t\tconst maxAngle = 70;\n\t\t\t\t\t\t\tconst step = (maxAngle - minAngle) / (capacityOfCurrentRing - 1);\n\t\t\t\t\t\t\tangleDeg = minAngle + (nodesInCurrentRing * step);\n\t\t\t\t\t\t}\n\n\t\t\t\t\t\t// Add orbit factor based on globalTime and ring index\n\t\t\t\t\t\t// Outer rings orbit slower\n\t\t\t\t\t\tconst orbitOffset = (globalTime / (currentRing + 1)) * 30; // 30 degrees amplitude\n\t\t\t\t\t\tconst finalAngleDeg = angleDeg + Math.sin(globalTime + i) * 10; // Bobbing in orbit\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst angleRad = finalAngleDeg * (Math.PI / 180);\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst x = centerX + Math.cos(angleRad) * radius;\n\t\t\t\t\t\tconst y = centerY + Math.sin(angleRad) * radius;\n\n\t\t\t\t\t\t// Apply exact unscaled position (arena transform handles zoom)\n\t\t\t\t\t\tnode.style.left = `${x}px`;\n\t\t\t\t\t\tnode.style.top = `${y}px`;\n\n\t\t\t\t\t\tnodesInCurrentRing++;\n\t\t\t\t\t});\n\n\t\t\t\t\t// Calculate Zoom out if nodes exceed screen width/height\n\t\t\t\t\tconst arena = document.getElementById('arena');\n\t\t\t\t\t\n\t\t\t\t\t// Max extent in X is roughly centerX + maxRadiusUsed + nodeWidth(160)\n\t\t\t\t\tconst requiredWidth = centerX + maxRadiusUsed + 160;\n\t\t\t\t\tconst availableWidth = window.innerWidth;\n\t\t\t\t\t\n\t\t\t\t\t// Max extent in Y is roughly maxRadiusUsed + nodeHeight(80)\n\t\t\t\t\tconst requiredHeight = maxRadiusUsed + 160;\n\t\t\t\t\tconst availableHeight = window.innerHeight / 2; // Since it spans up and down from center\n\n\t\t\t\t\tlet scaleX = 1;\n\t\t\t\t\tif (requiredWidth > availableWidth) {\n\t\t\t\t\t\tscaleX = availableWidth / requiredWidth;\n\t\t\t\t\t}\n\t\t\t\t\t\n\t\t\t\t\tlet scaleY = 1;\n\t\t\t\t\tif (requiredHeight > availableHeight) {\n\t\t\t\t\t\tscaleY = availableHeight / requiredHeight;\n\t\t\t\t\t}\n\n\t\t\t\t\tconst targetScale = Math.min(scaleX, scaleY, 1.0);\n\t\t\t\t\t\n\t\t\t\t\t// Smooth interpolation to target scale\n\t\t\t\t\tcurrentScale += (targetScale - currentScale) * 0.1;\n\t\t\t\t\tarena.style.transform = `scale(${currentScale})`;\n\n\t\t\t\t\trequestAnimationFrame(layoutAndAnimate);\n\t\t\t\t}\n\n\t\t\t\t// Start the animation loop\n\t\t\t\trequestAnimationFrame(layoutAndAnimate);\n\n\t\t\t\t// Traffic Line Animation System\n\t\t\t\tconst svgLayer = document.getElementById('animation-layer');\n\t\t\t\tconst reqHistory = new Map();\n\n\t\t\t\tdocument.body.addEventListener('htmx:afterSettle', function(evt) {\n\t\t\t\t\tconst proxy = document.getElementById('proxy-node');\n\t\t\t\t\tif (!proxy) return;\n\t\t\t\t\t\n\t\t\t\t\tconst centerX = 152;\n\t\t\t\t\tconst centerY = window.innerHeight / 2;\n\n\t\t\t\t\tconst nodes = document.querySelectorAll('.server-node');\n\t\t\t\t\tnodes.forEach(node => {\n\t\t\t\t\t\tconst port = node.getAttribute('data-port');\n\t\t\t\t\t\tconst tooltip = node.querySelector('.absolute.-top-\\\\[4\\\\.5rem\\\\]');\n\t\t\t\t\t\tif(!tooltip) return;\n\t\t\t\t\t\tconst reqsEl = tooltip.querySelectorAll('.flex.justify-between')[1];\n\t\t\t\t\t\tif (!reqsEl) return;\n\t\t\t\t\t\t\n\t\t\t\t\t\tconst reqsText = reqsEl.querySelector('span:last-child').innerText;\n\t\t\t\t\t\tconst currentReqs = parseInt(reqsText) || 0;\n\t\t\t\t\t\tconst prevReqs = reqHistory.get(port) || 0;\n\t\t\t\t\t\t\n\t\t\t\t\t\tif (currentReqs > prevReqs) {\n\t\t\t\t\t\t\tconst numLines = Math.min(currentReqs - prevReqs, 3);\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\t// For SVG lines, coordinates are in the unscaled arena space!\n\t\t\t\t\t\t\tconst endX = parseFloat(node.style.left);\n\t\t\t\t\t\t\tconst endY = parseFloat(node.style.top);\n\t\t\t\t\t\t\t\n\t\t\t\t\t\t\tfor (let i = 0; i < numLines; i++) {\n\t\t\t\t\t\t\t\tsetTimeout(() => drawParticle(centerX, centerY, endX, endY), i * 70);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t\t\n\t\t\t\t\t\treqHistory.set(port, currentReqs);\n\t\t\t\t\t});\n\t\t\t\t});\n\n\t\t\t\tfunction drawParticle(x1, y1, x2, y2) {\n\t\t\t\t\tconst ns = \"http://www.w3.org/2000/svg\";\n\t\t\t\t\tconst path = document.createElementNS(ns, \"path\");\n\t\t\t\t\t\n\t\t\t\t\tconst cx = (x1 + x2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\tconst cy = (y1 + y2) / 2 + (Math.random() * 100 - 50);\n\t\t\t\t\t\n\t\t\t\t\tconst d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;\n\t\t\t\t\tpath.setAttribute(\"d\", d);\n\t\t\t\t\tpath.setAttribute(\"fill\", \"none\");\n\t\t\t\t\tpath.setAttribute(\"stroke\", \"rgba(6, 182, 212, 0.8)\");\n\t\t\t\t\tpath.setAttribute(\"stroke-width\", \"3\");\n\t\t\t\t\tpath.setAttribute(\"stroke-linecap\", \"round\");\n\t\t\t\t\t\n\t\t\t\t\tsvgLayer.appendChild(path);\n\n\t\t\t\t\tconst length = path.getTotalLength();\n\t\t\t\t\tpath.setAttribute(\"stroke-dasharray\", `15, ${length}`);\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", length);\n\t\t\t\t\t\n\t\t\t\t\tpath.getBoundingClientRect(); // reflow\n\t\t\t\t\t\n\t\t\t\t\tpath.style.transition = \"stroke-dashoffset 0.4s ease-out, opacity 0.3s ease-in-out\";\n\t\t\t\t\tpath.setAttribute(\"stroke-dashoffset\", \"0\");\n\t\t\t\t\t\n\t\t\t\t\tsetTimeout(() => { path.style.opacity = \"0\"; }, 200);\n\t\t\t\t\tsetTimeout(() => { if (svgLayer.contains(path)) svgLayer.removeChild(path); }, 500);\n\t\t\t\t}\n\t\t\t</script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
