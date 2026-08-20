@@ -3,9 +3,9 @@ package handlers
 import (
 	"net"
 	"net/http"
-	"fmt"
 	"time"
 	"dashboard/internal/cluster"
+	"dashboard/ui"
 )
 
 func HandleSpawn(w http.ResponseWriter, r *http.Request){
@@ -19,11 +19,9 @@ func HandleSpawn(w http.ResponseWriter, r *http.Request){
 	// 	fmt.Fprintf(w, "<h2>Failed to spawn server</h2>")
 	// }
 
-	// return the string that the server has been spawned 
-	html := `<div class="bg-slate-800 border-l-4 border-emerald-500 text-emerald-400 p-4 mt-4 rounded shadow-md font-mono" hx-get="/health?port=%s" hx-trigger="every 2s" hx-swap="outerHTML">
-		Server :%s [ALIVE]
-	</div>`
-	fmt.Fprintf(w, html, port, port)
+	card := ui.ServerCard(port, true)
+	// context of the request and render directly to responseWriter
+	card.Render(r.Context(), w)
 }
 
 
@@ -43,18 +41,15 @@ func HandleHealth(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		// Failure - server is dead - return the dead card
 		// Notice it STILL has the hx-get attributes, so it keeps polling! If the server comes back, it turns green again.
-		html := `<div class="bg-slate-800 border-l-4 border-red-500 text-red-400 p-4 mt-4 rounded shadow-md font-mono" hx-get="/health?port=%s" hx-trigger="every 2s" hx-swap="outerHTML">
-			Server :%s [DEAD]
-		</div>`
-		fmt.Fprintf(w, html, port, port)
+		
+		failure_card := ui.ServerCard(port, false)
+		failure_card.Render(r.Context(), w)
 		return
 	} 
 	// SUCCESS: The server is alive. 
 	conn.Close() // Immediately close the socket so we don't leak memory
 
 	// Return the GREEN card
-	html := `<div class="bg-slate-800 border-l-4 border-emerald-500 text-emerald-400 p-4 mt-4 rounded shadow-md font-mono" hx-get="/health?port=%s" hx-trigger="every 2s" hx-swap="outerHTML">
-		Server :%s [ALIVE]
-	</div>`
-	fmt.Fprintf(w, html, port, port)
+	success_card := ui.ServerCard(port, true)
+	success_card.Render(r.Context(), w)
 }
