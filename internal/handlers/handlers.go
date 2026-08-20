@@ -10,7 +10,12 @@ import (
 
 func HandleSpawn(w http.ResponseWriter, r *http.Request){
 	// get the port 
-	port := cluster.GetPort()
+	port, err := cluster.GetPort()
+	if err != nil {
+		// can't create another server
+		println(err)
+		return
+	}
 
 	// spawn the actual server 
 	go cluster.SpawnServer(port)
