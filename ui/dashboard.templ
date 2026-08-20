@@ -40,7 +40,7 @@ func sparklinePoints(history []int) string {
 }
 
 func getUptimeStr(createdAt time.Time, format string) string {
-	sec := 20.0 - time.Since(createdAt).Seconds()
+	sec := 60.0 - time.Since(createdAt).Seconds()
 	if sec <= 0 {
 		return "-"
 	}
@@ -552,8 +552,8 @@ templ Dashboard(registry map[string]*cluster.Node) {
 					const centerX = window.innerWidth / 2;
 					const centerY = window.innerHeight / 2;
 
-					const baseRadius = 220;
-					const radiusStep = 150;
+					const baseRadius = 240;
+					const radiusStep = 200;
 					
 					let currentRing = 0;
 					let nodesInCurrentRing = 0;
@@ -592,7 +592,7 @@ templ Dashboard(registry map[string]*cluster.Node) {
 						
 						if (!isAnyHovered && tourStep === 0) {
 							const direction = currentRing % 2 === 0 ? 1 : -1;
-							const orbitSpeedPerFrame = (0.25 / (currentRing + 1)) * direction;
+							const orbitSpeedPerFrame = (0.08 / (currentRing + 1)) * direction;
 							state.angle += orbitSpeedPerFrame;
 						}
 						

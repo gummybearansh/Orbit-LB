@@ -114,7 +114,7 @@ func SpawnServer(port string) {
 
 	// i would cancel this timer / reset the timer if there is a call made to this server
 	// time.AfterFunc(1 * time.Minute, func () {
-	time.AfterFunc(20 * time.Second, func(){
+	time.AfterFunc(60 * time.Second, func(){
 		// need to make sure this server's node says it's dead
 		RegistryMutex.Lock()
 		Registry[port].Status = false

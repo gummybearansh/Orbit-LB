@@ -16,7 +16,7 @@ Under the hood, Orbit-LB is not just a UI trick—it's a functioning proxy simul
 - **Goroutine-backed Ephemeral Nodes:** When you horizontally scale ("Add Server"), the backend issues a command to spawn an isolated server process (Goroutine) on a discrete port on the host machine. 
 - **L7 Proxy Interception:** The central proxy node terminates incoming HTTP/TCP connections and multiplexes the payload traffic across the active cluster.
 - **Service Discovery & Routing:** The proxy maintains an active registry of healthy backend instances. It actively routes payloads using a deterministic Round-Robin algorithm.
-- **Resource Optimization (TTL):** Nodes are fully ephemeral. To optimize resources, any server node that receives 0 traffic for 20 continuous seconds will automatically trigger a graceful self-termination and deregister from the proxy.
+- **Resource Optimization (TTL):** Nodes are fully ephemeral. To optimize resources, any server node that receives 0 traffic for 60 continuous seconds will automatically trigger a graceful self-termination and deregister from the proxy.
 
 ## ⚡ Tech Stack
 
