@@ -117,8 +117,8 @@ templ ServerNodeInner(node *cluster.Node) {
 templ ServerNodeWrapper(node *cluster.Node) {
 	<div id={ "node-" + node.Port[1:] }
 		data-port={ node.Port[1:] }
-		class={ "server-node absolute group p-3 rounded-lg border flex flex-col font-mono cursor-pointer w-40 transform -translate-x-1/2 -translate-y-1/2 backdrop-blur-md z-30 transition-shadow duration-300",
-				templ.KV("bg-slate-900/80 border-slate-600 hover:border-slate-400 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]", node.Status), 
+		class={ "server-node absolute group p-3 rounded-lg border flex flex-col font-mono cursor-pointer w-40 transform -translate-x-1/2 -translate-y-1/2 z-30 transition-shadow duration-300",
+				templ.KV("bg-slate-900 border-slate-600 hover:border-slate-400 hover:shadow-[0_0_30px_rgba(255,255,255,0.15)]", node.Status), 
 				templ.KV("bg-slate-900/40 border-rose-500/20 opacity-40", !node.Status) }
 		style="left: 0; top: 0;"
 		hx-get={ "/health?port=" + node.Port[1:] }
@@ -189,6 +189,11 @@ templ Dashboard(registry map[string]*cluster.Node) {
 			
 			<div id="toast-container" class="fixed top-5 right-5 z-[500] flex flex-col gap-2 pointer-events-none"></div>
 
+			<!-- Reset Zoom Button -->
+			<button id="reset-zoom-btn" onclick="manualScale = null; this.classList.add('hidden');" class="hidden fixed top-5 left-5 z-[500] bg-slate-900 border border-slate-700 hover:border-slate-500 text-slate-300 py-2 px-4 rounded shadow-2xl text-[10px] font-mono uppercase tracking-widest transition-all">
+				Reset Zoom
+			</button>
+
 			<!-- Guided Tour Overlay -->
 			<div id="tour-overlay" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-[100] transition-opacity duration-500 hidden">
 				
@@ -229,7 +234,7 @@ templ Dashboard(registry map[string]*cluster.Node) {
 						<div class="w-full text-center mb-4">
 							<h2 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-slate-950/80 px-3 py-1 rounded backdrop-blur border border-slate-800 font-mono">Reverse Proxy</h2>
 						</div>
-						<div id="proxy-node" class="relative w-24 h-24 rounded-full border border-cyan-500/30 bg-slate-950/90 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.1)] transition-all duration-300 backdrop-blur-xl">
+						<div id="proxy-node" class="relative w-24 h-24 rounded-full border border-cyan-500/30 bg-slate-950 flex flex-col items-center justify-center shadow-[0_0_40px_rgba(6,182,212,0.1)] transition-all duration-300">
 							<div id="proxy-pulse" class="absolute inset-0 rounded-full bg-cyan-500/10 animate-pulse"></div>
 							
 							<div class="absolute inset-2 rounded-full border border-slate-700/50 animate-[spin_10s_linear_infinite]"></div>
@@ -267,6 +272,7 @@ templ Dashboard(registry map[string]*cluster.Node) {
 						</div>
 						<div class="flex flex-col">
 							<h1 class="text-lg font-bold text-slate-200 uppercase leading-none tracking-wide">Orbit-LB</h1>
+							<span class="text-[9px] text-cyan-500/80 font-mono tracking-widest uppercase mt-1">Sent: <span id="global-req-counter" class="text-cyan-400 font-bold">0</span></span>
 						</div>
 					</div>
 
@@ -291,9 +297,12 @@ templ Dashboard(registry map[string]*cluster.Node) {
 
 						<!-- Auto RPS Mode -->
 						<div class="flex items-center gap-4">
-							<div class="flex items-center gap-2">
-								<span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono">Rate</span>
-								<input type="range" id="rps-slider" min="1" max="150" value="50" class="w-24 accent-slate-500" oninput="document.getElementById('auto-blast-count').value = this.value">
+							<div class="flex flex-col gap-1 items-end">
+								<div class="flex items-center gap-2">
+									<span class="text-[9px] font-bold text-slate-500 uppercase tracking-widest font-mono">Rate</span>
+									<input type="range" id="rps-slider" min="1" max="150" value="50" class="w-24 accent-slate-500" oninput="document.getElementById('auto-blast-count').value = this.value; document.getElementById('rps-display').innerText = this.value + ' req/s'">
+								</div>
+								<span id="rps-display" class="text-[9px] font-mono text-slate-400">50 req/s</span>
 							</div>
 							
 							<button id="auto-btn" onclick="toggleAutoFire()" class="btn-minimal py-2 px-4 rounded-md text-xs font-mono font-bold transition-all flex items-center gap-2 group">
@@ -370,10 +379,6 @@ templ Dashboard(registry map[string]*cluster.Node) {
 					clearClones();
 
 					if (step === 1) {
-						// Spawn 1 node silently in background
-						document.getElementById('spawn-btn-hidden').click();
-						setTimeout(() => { if (!autoInterval) toggleAutoFire(); }, 500);
-
 						const proxy = document.getElementById('proxy-node');
 						const rect = proxy.getBoundingClientRect();
 						
@@ -442,6 +447,13 @@ templ Dashboard(registry map[string]*cluster.Node) {
 					}, 3000);
 				}
 
+				let totalRequestsSent = 0;
+				function updateGlobalCounter(amount) {
+					totalRequestsSent += amount;
+					const counterEl = document.getElementById('global-req-counter');
+					if(counterEl) counterEl.innerText = totalRequestsSent.toLocaleString();
+				}
+
 				function triggerProxyPulse() {
 					const activeServers = document.querySelectorAll('.server-node');
 					if(activeServers.length === 0) {
@@ -475,7 +487,10 @@ templ Dashboard(registry map[string]*cluster.Node) {
 
 						if (tourStep === 3) endTour(); 
 
+						const rate = parseInt(document.getElementById('auto-blast-count').value) || 0;
 						triggerProxyPulse();
+						updateGlobalCounter(rate);
+
 						btn.classList.add('bg-slate-800', 'text-white', 'border-slate-500');
 						btnText.innerText = 'Running...';
 						
@@ -487,6 +502,9 @@ templ Dashboard(registry map[string]*cluster.Node) {
 								return;
 							}
 							htmx.trigger('#auto-blast-form', 'submit');
+							
+							const currentRate = parseInt(document.getElementById('auto-blast-count').value) || 0;
+							updateGlobalCounter(currentRate);
 							triggerProxyPulse();
 						}, 1000);
 					}
@@ -498,6 +516,10 @@ templ Dashboard(registry map[string]*cluster.Node) {
 
 				document.addEventListener('keydown', (e) => {
 					if (e.target.tagName === 'INPUT') return;
+
+					if (e.code === 'Escape' && tourStep > 0) {
+						endTour();
+					}
 
 					if (e.key === 'a' || e.key === 'A') {
 						if (tourStep === 2) runTourStep(3);
@@ -512,6 +534,7 @@ templ Dashboard(registry map[string]*cluster.Node) {
 						if (e.repeat) return;
 						
 						document.getElementById('fire-btn-hidden').click();
+						updateGlobalCounter(1);
 
 						spaceTimeout = setTimeout(() => {
 							isAutoFromSpace = true;
@@ -534,6 +557,19 @@ templ Dashboard(registry map[string]*cluster.Node) {
 				const nodeStates = new Map();
 				let currentScale = 1.0;
 				let isAnyHovered = false;
+				let manualScale = null;
+
+				// Manual Zoom Event
+				document.querySelector('main').addEventListener('wheel', (e) => {
+					if (e.ctrlKey) return; // let browser zoom work if they use pinch
+					if (manualScale === null) manualScale = currentScale;
+					const zoomSensitivity = 0.002;
+					manualScale -= e.deltaY * zoomSensitivity;
+					if (manualScale < 0.1) manualScale = 0.1;
+					if (manualScale > 3.0) manualScale = 3.0;
+					
+					document.getElementById('reset-zoom-btn').classList.remove('hidden');
+				});
 
 				function layoutAndAnimate() {
 					const nodes = Array.from(document.querySelectorAll('.server-node'));
@@ -549,8 +585,9 @@ templ Dashboard(registry map[string]*cluster.Node) {
 
 					if (proxyPulse) proxyPulse.classList.remove('hidden');
 
-					const centerX = window.innerWidth / 2;
-					const centerY = window.innerHeight / 2;
+					const arena = document.getElementById('arena');
+					const centerX = arena.clientWidth / 2;
+					const centerY = arena.clientHeight / 2;
 
 					const baseRadius = 240;
 					const radiusStep = 200;
@@ -606,7 +643,6 @@ templ Dashboard(registry map[string]*cluster.Node) {
 						nodesInCurrentRing++;
 					});
 
-					const arena = document.getElementById('arena');
 					const requiredExtentX = maxRadiusUsed + 120;
 					const requiredExtentY = maxRadiusUsed + 80;
 					
@@ -626,7 +662,15 @@ templ Dashboard(registry map[string]*cluster.Node) {
 					let targetScale = Math.min(scaleX, scaleY, 1.0);
 					if (targetScale < 0.35) targetScale = 0.35;
 					
-					currentScale += (targetScale - currentScale) * 0.05;
+					let finalTargetScale = targetScale;
+					if (manualScale !== null) {
+						finalTargetScale = manualScale;
+					}
+					
+					// Smooth interpolation
+					const snapFactor = manualScale !== null ? 0.3 : 0.05;
+					currentScale += (finalTargetScale - currentScale) * snapFactor;
+					
 					arena.style.transform = `scale(${currentScale})`;
 
 					requestAnimationFrame(layoutAndAnimate);
@@ -642,8 +686,9 @@ templ Dashboard(registry map[string]*cluster.Node) {
 					const proxy = document.getElementById('proxy-node');
 					if (!proxy) return;
 					
-					const centerX = window.innerWidth / 2;
-					const centerY = window.innerHeight / 2;
+					const arena = document.getElementById('arena');
+					const centerX = arena.clientWidth / 2;
+					const centerY = arena.clientHeight / 2;
 
 					const nodes = document.querySelectorAll('.server-node');
 					nodes.forEach(node => {
