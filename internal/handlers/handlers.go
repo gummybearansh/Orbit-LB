@@ -37,8 +37,9 @@ func HandleSpawn(w http.ResponseWriter, r *http.Request){
 	}
 
 	// 4. Render directly to the DOM
-	card := ui.ServerCard(optimisticNode, false)
-	card.Render(r.Context(), w)}
+	card := ui.ServerNodeWrapper(optimisticNode)
+	card.Render(r.Context(), w)
+}
 
 
 func HandleHealth(w http.ResponseWriter, r *http.Request){
@@ -80,7 +81,7 @@ func HandleHealth(w http.ResponseWriter, r *http.Request){
 	defer cluster.RegistryMutex.RUnlock()
 
 	// isOOB MUST be false here! This is a direct HTMX response.
-	card := ui.ServerCard(cluster.Registry[target_port], false)
+	card := ui.ServerNodeInner(cluster.Registry[target_port])
 	card.Render(r.Context(), w)
 }
 
